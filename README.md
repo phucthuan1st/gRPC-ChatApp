@@ -29,6 +29,8 @@ Before you can run this application, make sure you have the following installed:
 - **gRPC for Go:** Follow the gRPC installation guide for Go [here](https://grpc.io/docs/languages/go/quickstart/).
 - **go-gtk:** Install go-gtk by following the instructions in the [go-gtk repository](https://github.com/mattn/go-gtk).
 
+But do not worry. I will include gRPC and go-gtk in go module config (go.mod), just follow the Usage for an easy use.
+
 <br>
 
 ## Usage
