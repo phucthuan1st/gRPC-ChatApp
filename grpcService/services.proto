@@ -1,0 +1,36 @@
+syntax = "proto3";
+package grpcService;
+
+option go_package = "https://github.com/phucthuan1st/gRPC-ChatRoom/grpcService";
+
+message UserCredentials {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthenticationResult {
+  string username = 1;
+  int32 status = 2;
+}
+
+message ChatMessage {
+  string sender = 1;
+  string message = 2;
+}
+
+message SentMessageStatus {
+  string id = 1;
+  int64 timestamp = 2;
+  int32 status = 3;
+}
+
+service ChatRoom {
+  // send message
+  rpc SendMessage(ChatMessage) returns (SentMessageStatus);
+
+  // recieve message streaming
+  rpc ReceiveMessage(stream ChatMessage) returns (stream SentMessageStatus);
+
+  // login
+  rpc Login(UserCredentials) returns (AuthenticationResult);
+}
