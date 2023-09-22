@@ -3,6 +3,7 @@ module github.com/phucthuan1st/gRPC-ChatRoom
 go 1.21.1
 
 require (
+	github.com/gotk3/gotk3 v0.6.2
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 )

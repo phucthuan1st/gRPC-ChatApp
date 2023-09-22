@@ -6,6 +6,16 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/gotk3/gotk3 v0.6.2
+## explicit; go 1.14
+github.com/gotk3/gotk3/cairo
+github.com/gotk3/gotk3/gdk
+github.com/gotk3/gotk3/glib
+github.com/gotk3/gotk3/gtk
+github.com/gotk3/gotk3/internal/callback
+github.com/gotk3/gotk3/internal/closure
+github.com/gotk3/gotk3/internal/slab
+github.com/gotk3/gotk3/pango
 # golang.org/x/net v0.15.0
 ## explicit; go 1.17
 golang.org/x/net/http/httpguts
