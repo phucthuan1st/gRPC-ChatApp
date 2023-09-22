@@ -35,23 +35,23 @@ Before you can run this application, make sure you have the following installed:
 
 1. Clone the repository:
 ```
-   git clone https://github.com/phucthuan1st/gRPC-ChatRoom.git
+git clone https://github.com/phucthuan1st/gRPC-ChatRoom.git
 ```
 2. Change directory to the project folder:
 ```
-   cd gRPC-ChatRoom
+cd gRPC-ChatRoom
 ```
 3. Install dependencies:
 ```
-   go get ./...
+go get ./...
 ```
 4. Start the server:
 ```
-   go run server/main.go
+go run server/main.go
 ```
 5. Start a client (multiple clients can be run in different terminal windows):
 ```
-   go run client/main.go
+go run client/main.go
 ```
 6. Follow the on-screen instructions to chat with other users using the go-gtk GUI.
 
