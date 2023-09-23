@@ -11,6 +11,7 @@ message UserCredentials {
 message AuthenticationResult {
   string username = 1;
   int32 status = 2;
+  string message = 3;
 }
 
 message ChatMessage {
@@ -25,12 +26,12 @@ message SentMessageStatus {
 }
 
 service ChatRoom {
-  // send message
+  // send message (for test purpose)
   rpc SendMessage(ChatMessage) returns (SentMessageStatus);
 
-  // recieve message streaming
-  rpc ReceiveMessage(stream ChatMessage) returns (stream SentMessageStatus);
+  // join chat, gain ability to send and receive message from server
+  rpc JoinChat(stream ChatMessage) returns (stream SentMessageStatus);
 
-  // login
+  // login using a pair of username and chat password
   rpc Login(UserCredentials) returns (AuthenticationResult);
 }

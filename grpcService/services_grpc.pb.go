@@ -22,11 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatRoomClient interface {
-	// send message
+	// send message (for test purpose)
 	SendMessage(ctx context.Context, in *ChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error)
-	// recieve message streaming
-	ReceiveMessage(ctx context.Context, opts ...grpc.CallOption) (ChatRoom_ReceiveMessageClient, error)
-	// login
+	// join chat, gain ability to send and receive message from server
+	JoinChat(ctx context.Context, opts ...grpc.CallOption) (ChatRoom_JoinChatClient, error)
+	// login using a pair of username and chat password
 	Login(ctx context.Context, in *UserCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error)
 }
 
@@ -47,30 +47,30 @@ func (c *chatRoomClient) SendMessage(ctx context.Context, in *ChatMessage, opts 
 	return out, nil
 }
 
-func (c *chatRoomClient) ReceiveMessage(ctx context.Context, opts ...grpc.CallOption) (ChatRoom_ReceiveMessageClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ChatRoom_ServiceDesc.Streams[0], "/grpcService.ChatRoom/ReceiveMessage", opts...)
+func (c *chatRoomClient) JoinChat(ctx context.Context, opts ...grpc.CallOption) (ChatRoom_JoinChatClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ChatRoom_ServiceDesc.Streams[0], "/grpcService.ChatRoom/JoinChat", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &chatRoomReceiveMessageClient{stream}
+	x := &chatRoomJoinChatClient{stream}
 	return x, nil
 }
 
-type ChatRoom_ReceiveMessageClient interface {
+type ChatRoom_JoinChatClient interface {
 	Send(*ChatMessage) error
 	Recv() (*SentMessageStatus, error)
 	grpc.ClientStream
 }
 
-type chatRoomReceiveMessageClient struct {
+type chatRoomJoinChatClient struct {
 	grpc.ClientStream
 }
 
-func (x *chatRoomReceiveMessageClient) Send(m *ChatMessage) error {
+func (x *chatRoomJoinChatClient) Send(m *ChatMessage) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *chatRoomReceiveMessageClient) Recv() (*SentMessageStatus, error) {
+func (x *chatRoomJoinChatClient) Recv() (*SentMessageStatus, error) {
 	m := new(SentMessageStatus)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -91,11 +91,11 @@ func (c *chatRoomClient) Login(ctx context.Context, in *UserCredentials, opts ..
 // All implementations must embed UnimplementedChatRoomServer
 // for forward compatibility
 type ChatRoomServer interface {
-	// send message
+	// send message (for test purpose)
 	SendMessage(context.Context, *ChatMessage) (*SentMessageStatus, error)
-	// recieve message streaming
-	ReceiveMessage(ChatRoom_ReceiveMessageServer) error
-	// login
+	// join chat, gain ability to send and receive message from server
+	JoinChat(ChatRoom_JoinChatServer) error
+	// login using a pair of username and chat password
 	Login(context.Context, *UserCredentials) (*AuthenticationResult, error)
 	mustEmbedUnimplementedChatRoomServer()
 }
@@ -107,8 +107,8 @@ type UnimplementedChatRoomServer struct {
 func (UnimplementedChatRoomServer) SendMessage(context.Context, *ChatMessage) (*SentMessageStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
 }
-func (UnimplementedChatRoomServer) ReceiveMessage(ChatRoom_ReceiveMessageServer) error {
-	return status.Errorf(codes.Unimplemented, "method ReceiveMessage not implemented")
+func (UnimplementedChatRoomServer) JoinChat(ChatRoom_JoinChatServer) error {
+	return status.Errorf(codes.Unimplemented, "method JoinChat not implemented")
 }
 func (UnimplementedChatRoomServer) Login(context.Context, *UserCredentials) (*AuthenticationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
@@ -144,25 +144,25 @@ func _ChatRoom_SendMessage_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatRoom_ReceiveMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ChatRoomServer).ReceiveMessage(&chatRoomReceiveMessageServer{stream})
+func _ChatRoom_JoinChat_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ChatRoomServer).JoinChat(&chatRoomJoinChatServer{stream})
 }
 
-type ChatRoom_ReceiveMessageServer interface {
+type ChatRoom_JoinChatServer interface {
 	Send(*SentMessageStatus) error
 	Recv() (*ChatMessage, error)
 	grpc.ServerStream
 }
 
-type chatRoomReceiveMessageServer struct {
+type chatRoomJoinChatServer struct {
 	grpc.ServerStream
 }
 
-func (x *chatRoomReceiveMessageServer) Send(m *SentMessageStatus) error {
+func (x *chatRoomJoinChatServer) Send(m *SentMessageStatus) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *chatRoomReceiveMessageServer) Recv() (*ChatMessage, error) {
+func (x *chatRoomJoinChatServer) Recv() (*ChatMessage, error) {
 	m := new(ChatMessage)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -206,8 +206,8 @@ var ChatRoom_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ReceiveMessage",
-			Handler:       _ChatRoom_ReceiveMessage_Handler,
+			StreamName:    "JoinChat",
+			Handler:       _ChatRoom_JoinChat_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

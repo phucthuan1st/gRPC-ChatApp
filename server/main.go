@@ -21,12 +21,12 @@ func main() {
 		return
 	}
 
-	server := grpc.NewServer()
-	grpcService.RegisterChatRoomServer(server, &be.ChatServer{})
+	grpcServer := grpc.NewServer()
+	grpcService.RegisterChatRoomServer(grpcServer, &be.ChatServer{})
 
 	// Start the gRPC server
 	log.Printf("Starting gRPC server on localhost:%d...", port)
-	if err := server.Serve(listener); err != nil {
+	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
 }

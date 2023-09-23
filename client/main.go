@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"os"
 
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	"google.golang.org/grpc"
@@ -26,16 +29,46 @@ func main() {
 
 	client := gs.NewChatRoomClient(conn)
 
+	stream, err := client.JoinChat(context.Background())
+
+	// start to wait for server message
+	waitc := make(chan struct{})
+	go func() {
+		for {
+			in, err := stream.Recv()
+			if err == io.EOF {
+				// read done.
+				close(waitc)
+				return
+			}
+			if err != nil {
+				log.Fatalf("Failed to receive a note : %v", err)
+			}
+			log.Printf("Got message %s at %d from server, status: %d", in.GetId(), in.GetTimestamp(), in.GetStatus())
+		}
+	}()
+
 	msg := &gs.ChatMessage{
 		Sender:  "Alice",
-		Message: "Hello Server, I'm here to test the server"}
+		Message: ""}
 
-	response, err := client.SendMessage(context.Background(), msg)
+	reader := bufio.NewReader(os.Stdin)
 
-	if err != nil {
-		log.Fatalln("Cannot send message to server")
-		return
+	for msg.GetMessage() != "quit\n" {
+		fmt.Print("Enter a message: ")
+		msg.Message, _ = reader.ReadString('\n')
+
+		if msg.GetMessage() != "\n" {
+			err = stream.Send(msg)
+
+			if err != nil {
+				log.Fatalln("failed to send message to server")
+			}
+		}
+
+		msg.Message = ""
 	}
 
-	fmt.Printf("Send complete: %v\n", response)
+	stream.CloseSend()
+	<-waitc
 }
