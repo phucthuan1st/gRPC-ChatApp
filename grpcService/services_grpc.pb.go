@@ -22,12 +22,22 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatRoomClient interface {
-	// send message (for test purpose)
-	SendMessage(ctx context.Context, in *ChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error)
-	// join chat, gain ability to send and receive message from server
-	JoinChat(ctx context.Context, opts ...grpc.CallOption) (ChatRoom_JoinChatClient, error)
-	// login using a pair of username and chat password
-	Login(ctx context.Context, in *UserCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error)
+	// broadcast message to every one in room chat
+	SendPublicMessage(ctx context.Context, in *ChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error)
+	// send private message to user (no broadcast)
+	SendPrivateMessage(ctx context.Context, in *PrivateChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error)
+	// start to listen to server,
+	// create server side stream,
+	// and gain ability to receive message from server
+	Listen(ctx context.Context, in *Command, opts ...grpc.CallOption) (ChatRoom_ListenClient, error)
+	// Register for a new client account
+	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*AuthenticationResult, error)
+	// login using a pair of username and password
+	Login(ctx context.Context, in *UserLoginCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error)
+	// Get a list of information of connected peers or specific peers
+	GetConnectedPeers(ctx context.Context, in *Command, opts ...grpc.CallOption) (*UserList, error)
+	// Get a peer information (except password)
+	GetPeerInfomations(ctx context.Context, in *Command, opts ...grpc.CallOption) (*User, error)
 }
 
 type chatRoomClient struct {
@@ -38,49 +48,86 @@ func NewChatRoomClient(cc grpc.ClientConnInterface) ChatRoomClient {
 	return &chatRoomClient{cc}
 }
 
-func (c *chatRoomClient) SendMessage(ctx context.Context, in *ChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error) {
+func (c *chatRoomClient) SendPublicMessage(ctx context.Context, in *ChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error) {
 	out := new(SentMessageStatus)
-	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/SendMessage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/SendPublicMessage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *chatRoomClient) JoinChat(ctx context.Context, opts ...grpc.CallOption) (ChatRoom_JoinChatClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ChatRoom_ServiceDesc.Streams[0], "/grpcService.ChatRoom/JoinChat", opts...)
+func (c *chatRoomClient) SendPrivateMessage(ctx context.Context, in *PrivateChatMessage, opts ...grpc.CallOption) (*SentMessageStatus, error) {
+	out := new(SentMessageStatus)
+	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/SendPrivateMessage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &chatRoomJoinChatClient{stream}
+	return out, nil
+}
+
+func (c *chatRoomClient) Listen(ctx context.Context, in *Command, opts ...grpc.CallOption) (ChatRoom_ListenClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ChatRoom_ServiceDesc.Streams[0], "/grpcService.ChatRoom/Listen", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &chatRoomListenClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
-type ChatRoom_JoinChatClient interface {
-	Send(*ChatMessage) error
-	Recv() (*SentMessageStatus, error)
+type ChatRoom_ListenClient interface {
+	Recv() (*ChatMessage, error)
 	grpc.ClientStream
 }
 
-type chatRoomJoinChatClient struct {
+type chatRoomListenClient struct {
 	grpc.ClientStream
 }
 
-func (x *chatRoomJoinChatClient) Send(m *ChatMessage) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *chatRoomJoinChatClient) Recv() (*SentMessageStatus, error) {
-	m := new(SentMessageStatus)
+func (x *chatRoomListenClient) Recv() (*ChatMessage, error) {
+	m := new(ChatMessage)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *chatRoomClient) Login(ctx context.Context, in *UserCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error) {
+func (c *chatRoomClient) Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*AuthenticationResult, error) {
+	out := new(AuthenticationResult)
+	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/Register", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatRoomClient) Login(ctx context.Context, in *UserLoginCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error) {
 	out := new(AuthenticationResult)
 	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatRoomClient) GetConnectedPeers(ctx context.Context, in *Command, opts ...grpc.CallOption) (*UserList, error) {
+	out := new(UserList)
+	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/GetConnectedPeers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatRoomClient) GetPeerInfomations(ctx context.Context, in *Command, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/GetPeerInfomations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,12 +138,22 @@ func (c *chatRoomClient) Login(ctx context.Context, in *UserCredentials, opts ..
 // All implementations must embed UnimplementedChatRoomServer
 // for forward compatibility
 type ChatRoomServer interface {
-	// send message (for test purpose)
-	SendMessage(context.Context, *ChatMessage) (*SentMessageStatus, error)
-	// join chat, gain ability to send and receive message from server
-	JoinChat(ChatRoom_JoinChatServer) error
-	// login using a pair of username and chat password
-	Login(context.Context, *UserCredentials) (*AuthenticationResult, error)
+	// broadcast message to every one in room chat
+	SendPublicMessage(context.Context, *ChatMessage) (*SentMessageStatus, error)
+	// send private message to user (no broadcast)
+	SendPrivateMessage(context.Context, *PrivateChatMessage) (*SentMessageStatus, error)
+	// start to listen to server,
+	// create server side stream,
+	// and gain ability to receive message from server
+	Listen(*Command, ChatRoom_ListenServer) error
+	// Register for a new client account
+	Register(context.Context, *User) (*AuthenticationResult, error)
+	// login using a pair of username and password
+	Login(context.Context, *UserLoginCredentials) (*AuthenticationResult, error)
+	// Get a list of information of connected peers or specific peers
+	GetConnectedPeers(context.Context, *Command) (*UserList, error)
+	// Get a peer information (except password)
+	GetPeerInfomations(context.Context, *Command) (*User, error)
 	mustEmbedUnimplementedChatRoomServer()
 }
 
@@ -104,14 +161,26 @@ type ChatRoomServer interface {
 type UnimplementedChatRoomServer struct {
 }
 
-func (UnimplementedChatRoomServer) SendMessage(context.Context, *ChatMessage) (*SentMessageStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
+func (UnimplementedChatRoomServer) SendPublicMessage(context.Context, *ChatMessage) (*SentMessageStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendPublicMessage not implemented")
 }
-func (UnimplementedChatRoomServer) JoinChat(ChatRoom_JoinChatServer) error {
-	return status.Errorf(codes.Unimplemented, "method JoinChat not implemented")
+func (UnimplementedChatRoomServer) SendPrivateMessage(context.Context, *PrivateChatMessage) (*SentMessageStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendPrivateMessage not implemented")
 }
-func (UnimplementedChatRoomServer) Login(context.Context, *UserCredentials) (*AuthenticationResult, error) {
+func (UnimplementedChatRoomServer) Listen(*Command, ChatRoom_ListenServer) error {
+	return status.Errorf(codes.Unimplemented, "method Listen not implemented")
+}
+func (UnimplementedChatRoomServer) Register(context.Context, *User) (*AuthenticationResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedChatRoomServer) Login(context.Context, *UserLoginCredentials) (*AuthenticationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedChatRoomServer) GetConnectedPeers(context.Context, *Command) (*UserList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConnectedPeers not implemented")
+}
+func (UnimplementedChatRoomServer) GetPeerInfomations(context.Context, *Command) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPeerInfomations not implemented")
 }
 func (UnimplementedChatRoomServer) mustEmbedUnimplementedChatRoomServer() {}
 
@@ -126,52 +195,83 @@ func RegisterChatRoomServer(s grpc.ServiceRegistrar, srv ChatRoomServer) {
 	s.RegisterService(&ChatRoom_ServiceDesc, srv)
 }
 
-func _ChatRoom_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatRoom_SendPublicMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ChatMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatRoomServer).SendMessage(ctx, in)
+		return srv.(ChatRoomServer).SendPublicMessage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpcService.ChatRoom/SendMessage",
+		FullMethod: "/grpcService.ChatRoom/SendPublicMessage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatRoomServer).SendMessage(ctx, req.(*ChatMessage))
+		return srv.(ChatRoomServer).SendPublicMessage(ctx, req.(*ChatMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatRoom_JoinChat_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ChatRoomServer).JoinChat(&chatRoomJoinChatServer{stream})
+func _ChatRoom_SendPrivateMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrivateChatMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatRoomServer).SendPrivateMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpcService.ChatRoom/SendPrivateMessage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatRoomServer).SendPrivateMessage(ctx, req.(*PrivateChatMessage))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type ChatRoom_JoinChatServer interface {
-	Send(*SentMessageStatus) error
-	Recv() (*ChatMessage, error)
+func _ChatRoom_Listen_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Command)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ChatRoomServer).Listen(m, &chatRoomListenServer{stream})
+}
+
+type ChatRoom_ListenServer interface {
+	Send(*ChatMessage) error
 	grpc.ServerStream
 }
 
-type chatRoomJoinChatServer struct {
+type chatRoomListenServer struct {
 	grpc.ServerStream
 }
 
-func (x *chatRoomJoinChatServer) Send(m *SentMessageStatus) error {
+func (x *chatRoomListenServer) Send(m *ChatMessage) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *chatRoomJoinChatServer) Recv() (*ChatMessage, error) {
-	m := new(ChatMessage)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
+func _ChatRoom_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
 		return nil, err
 	}
-	return m, nil
+	if interceptor == nil {
+		return srv.(ChatRoomServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpcService.ChatRoom/Register",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatRoomServer).Register(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatRoom_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserCredentials)
+	in := new(UserLoginCredentials)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -183,7 +283,43 @@ func _ChatRoom_Login_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/grpcService.ChatRoom/Login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatRoomServer).Login(ctx, req.(*UserCredentials))
+		return srv.(ChatRoomServer).Login(ctx, req.(*UserLoginCredentials))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatRoom_GetConnectedPeers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Command)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatRoomServer).GetConnectedPeers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpcService.ChatRoom/GetConnectedPeers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatRoomServer).GetConnectedPeers(ctx, req.(*Command))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatRoom_GetPeerInfomations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Command)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatRoomServer).GetPeerInfomations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpcService.ChatRoom/GetPeerInfomations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatRoomServer).GetPeerInfomations(ctx, req.(*Command))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -196,20 +332,35 @@ var ChatRoom_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ChatRoomServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SendMessage",
-			Handler:    _ChatRoom_SendMessage_Handler,
+			MethodName: "SendPublicMessage",
+			Handler:    _ChatRoom_SendPublicMessage_Handler,
+		},
+		{
+			MethodName: "SendPrivateMessage",
+			Handler:    _ChatRoom_SendPrivateMessage_Handler,
+		},
+		{
+			MethodName: "Register",
+			Handler:    _ChatRoom_Register_Handler,
 		},
 		{
 			MethodName: "Login",
 			Handler:    _ChatRoom_Login_Handler,
 		},
+		{
+			MethodName: "GetConnectedPeers",
+			Handler:    _ChatRoom_GetConnectedPeers_Handler,
+		},
+		{
+			MethodName: "GetPeerInfomations",
+			Handler:    _ChatRoom_GetPeerInfomations_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "JoinChat",
-			Handler:       _ChatRoom_JoinChat_Handler,
+			StreamName:    "Listen",
+			Handler:       _ChatRoom_Listen_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "grpcService/services.proto",

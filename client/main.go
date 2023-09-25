@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"log"
-	"os"
 
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	"google.golang.org/grpc"
@@ -29,7 +27,8 @@ func main() {
 
 	client := gs.NewChatRoomClient(conn)
 
-	stream, err := client.JoinChat(context.Background())
+	username := "Alice"
+	stream, err := client.Listen(context.Background(), &gs.Command{AdditionalInfo: &username})
 
 	// start to wait for server message
 	waitc := make(chan struct{})
@@ -44,31 +43,8 @@ func main() {
 			if err != nil {
 				log.Fatalf("Failed to receive a note : %v", err)
 			}
-			log.Printf("Got message %s at %d from server, status: %d", in.GetId(), in.GetTimestamp(), in.GetStatus())
+			log.Printf("%s just chat: %s", in.GetSender(), in.GetMessage())
 		}
 	}()
-
-	msg := &gs.ChatMessage{
-		Sender:  "Alice",
-		Message: ""}
-
-	reader := bufio.NewReader(os.Stdin)
-
-	for msg.GetMessage() != "quit\n" {
-		fmt.Print("Enter a message: ")
-		msg.Message, _ = reader.ReadString('\n')
-
-		if msg.GetMessage() != "\n" {
-			err = stream.Send(msg)
-
-			if err != nil {
-				log.Fatalln("failed to send message to server")
-			}
-		}
-
-		msg.Message = ""
-	}
-
-	stream.CloseSend()
 	<-waitc
 }

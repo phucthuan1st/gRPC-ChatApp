@@ -3,19 +3,48 @@ package grpcService;
 
 option go_package = "https://github.com/phucthuan1st/gRPC-ChatRoom/grpcService";
 
-message UserCredentials {
+// credentials that use for login purpose only
+message UserLoginCredentials {
   string username = 1;
   string password = 2;
 }
 
+message Address {
+  optional string street = 1;
+  optional string city = 2;
+  string country = 3;
+}
+
+// User infomation, created when register, and retrieve when needed
+message User {
+  string username = 1;
+  string password = 2;
+  string full_name = 4;
+  optional string email = 3;
+  optional string birthdate = 5;
+  optional Address address = 6;
+}
+
+// A list of user
+message UserList { repeated User user = 1; }
+
+// Authenticate result when register or login
 message AuthenticationResult {
   string username = 1;
   int32 status = 2;
-  string message = 3;
+  optional string message = 3;
 }
 
+// A message to use in chatroom
 message ChatMessage {
   string sender = 1;
+  string message = 2;
+}
+
+// A message to use in private chat
+message PrivateChatMessage {
+  string sender = 1;
+  string recipent = 3;
   string message = 2;
 }
 
@@ -25,13 +54,32 @@ message SentMessageStatus {
   int32 status = 3;
 }
 
+message Command { optional string additionalInfo = 1; }
+
 service ChatRoom {
-  // send message (for test purpose)
-  rpc SendMessage(ChatMessage) returns (SentMessageStatus);
 
-  // join chat, gain ability to send and receive message from server
-  rpc JoinChat(stream ChatMessage) returns (stream SentMessageStatus);
+  // broadcast message to every one in room chat
+  rpc SendPublicMessage(ChatMessage) returns (SentMessageStatus);
 
-  // login using a pair of username and chat password
-  rpc Login(UserCredentials) returns (AuthenticationResult);
+  // send private message to user (no broadcast)
+  rpc SendPrivateMessage(PrivateChatMessage) returns (SentMessageStatus);
+
+  /*
+   * start to listen to server,
+   * create server side stream,
+   * and gain ability to receive message from server
+   */
+  rpc Listen(Command) returns (stream ChatMessage);
+
+  // Register for a new client account
+  rpc Register(User) returns (AuthenticationResult);
+
+  // login using a pair of username and password
+  rpc Login(UserLoginCredentials) returns (AuthenticationResult);
+
+  // Get a list of information of connected peers or specific peers
+  rpc GetConnectedPeers(Command) returns (UserList);
+
+  // Get a peer information (except password)
+  rpc GetPeerInfomations(Command) returns (User);
 }
