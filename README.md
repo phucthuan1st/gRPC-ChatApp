@@ -70,7 +70,7 @@ Contributions are welcome! If you'd like to contribute to this project, please f
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/phucthuan1st/gRPC-ChatRoom/blob/master/LICENSE) file for details.
 
 ## Acknowledgments
 
