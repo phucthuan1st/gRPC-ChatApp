@@ -119,10 +119,12 @@ func (cs *ChatServer) Listen(cmd *gs.Command, handler gs.ChatRoom_ListenServer) 
 	username := cmd.GetAdditionalInfo()
 
 	if len(username) == 0 {
+		log.Fatalf("A blank named peer was try to join the chat")
 		return errors.New("Blank username is not allowed")
 	}
 
 	if cs.connectedPeers[username].handler != nil {
+		log.Fatalf("User %s already connected from another place. Try again later\n", *cmd.AdditionalInfo)
 		return errors.New("User already connected from another place. Try again later")
 	}
 
@@ -154,9 +156,12 @@ func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*
 		cs.connectedPeers = make(map[string]Peer)
 	} else if _, ok := cs.connectedPeers[in.GetUsername()]; ok {
 		*result.Message = fmt.Sprintf("Failed to login as %s: Already login from another place!", in.Username)
+		log.Fatalf("Failed to login as %s: Already login from another place!", in.Username)
 		return &result, nil
 	} else if in.Password != chatPasswd {
 		*result.Message = fmt.Sprintf("Failed to login as %s: Wrong password!", in.Username)
+		log.Fatalf("Failed to login as %s: Wrong password!", in.Username)
+		return &result, nil
 	}
 
 	cs.connectedPeers[in.Username] = Peer{
@@ -164,6 +169,7 @@ func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*
 		handler: nil,
 	}
 	*result.Message = "Login successfully!!!!"
+	log.Printf("%s was just logged in\n", in.Username)
 	result.Status = int32(codes.OK)
 
 	return &result, nil
