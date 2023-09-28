@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	grpcPeer "github.com/birros/go-libp2p-grpc"
-
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	codes "google.golang.org/grpc/codes"
 )
@@ -20,7 +18,6 @@ var chatPasswd string = "password"
 
 // Peer informantion
 type Peer struct {
-	id      string
 	handler *gs.ChatRoom_ListenServer
 }
 
@@ -72,6 +69,8 @@ func (cs *ChatServer) SendPublicMessage(ctx context.Context, msg *gs.ChatMessage
 	id := fmt.Sprintf("%d-%s", timestamp, msg.Sender)
 	status := 1
 
+	var count int = 0
+
 	cs.mu.Lock()
 	for username, peer := range cs.connectedPeers {
 		if username == msg.GetSender() {
@@ -82,17 +81,24 @@ func (cs *ChatServer) SendPublicMessage(ctx context.Context, msg *gs.ChatMessage
 		handler := *peer.handler
 		if err := handler.Send(msg); err != nil {
 			log.Printf("Failed to send message to %s: %s", username, err.Error())
+			count++
 		}
 	}
 	cs.mu.Unlock()
 
 	log.Println("Boradcast message completed!")
 
+	var err error = nil
+
+	if count > 0 {
+		err = errors.New(fmt.Sprintf("%d users can't receive the message!", count))
+	}
+
 	return &gs.SentMessageStatus{
 			Id:        id,
 			Timestamp: timestamp,
 			Status:    int32(status)},
-		nil
+		err
 }
 
 func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateChatMessage) (*gs.SentMessageStatus, error) {
@@ -103,7 +109,7 @@ func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateCha
 	status := 1
 
 	handler := *(cs.connectedPeers[msg.Recipent].handler)
-	handler.Send(&gs.ChatMessage{
+	err := handler.Send(&gs.ChatMessage{
 		Sender:  msg.GetSender(),
 		Message: msg.GetMessage(),
 	})
@@ -112,7 +118,7 @@ func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateCha
 			Id:        id,
 			Timestamp: timestamp,
 			Status:    int32(status)},
-		nil
+		err
 }
 
 func (cs *ChatServer) Listen(cmd *gs.Command, handler gs.ChatRoom_ListenServer) error {
@@ -137,38 +143,33 @@ func (cs *ChatServer) Listen(cmd *gs.Command, handler gs.ChatRoom_ListenServer) 
 
 // Login to server using registered account (username and password)
 func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*gs.AuthenticationResult, error) {
-	peerId, isGood := grpcPeer.RemotePeerFromContext(ctx)
 
 	result := gs.AuthenticationResult{}
 	result.Username = in.Username
 	result.Status = int32(codes.Unauthenticated)
 
-	// cannot get peer information
-	if !isGood {
-		log.Fatalf("Cannot authenticate the user %s\n", in.Username)
-		*result.Message = "Failed to authenticate credentials!"
-		result.Status = int32(codes.Unavailable)
-
-		return &result, nil
-	}
-
 	if len(cs.connectedPeers) == 0 {
 		cs.connectedPeers = make(map[string]Peer)
 	} else if _, ok := cs.connectedPeers[in.GetUsername()]; ok {
-		*result.Message = fmt.Sprintf("Failed to login as %s: Already login from another place!", in.Username)
+		msg := fmt.Sprintf("Failed to login as %s: Already login from another place!", in.Username)
+		result.Message = &msg
 		log.Fatalf("Failed to login as %s: Already login from another place!", in.Username)
 		return &result, nil
+
 	} else if in.Password != chatPasswd {
-		*result.Message = fmt.Sprintf("Failed to login as %s: Wrong password!", in.Username)
+
+		// TODO: implement login logic
+		msg := fmt.Sprintf("Failed to login as %s: Wrong password!", in.Username)
+		result.Message = &msg
 		log.Fatalf("Failed to login as %s: Wrong password!", in.Username)
 		return &result, nil
 	}
 
 	cs.connectedPeers[in.Username] = Peer{
-		id:      string(peerId),
 		handler: nil,
 	}
-	*result.Message = "Login successfully!!!!"
+	msg := "Login successfully!!!!"
+	result.Message = &msg
 	log.Printf("%s was just logged in\n", in.Username)
 	result.Status = int32(codes.OK)
 

@@ -70,7 +70,7 @@ func (ca *ClientApp) StartListening() {
 	<-waitc
 }
 
-func (ca *ClientApp) RequestLogin(password string) {
+func (ca *ClientApp) RequestLogin(password string) bool {
 	cred := gs.UserLoginCredentials{
 		Username: *ca.username,
 		Password: password,
@@ -79,19 +79,22 @@ func (ca *ClientApp) RequestLogin(password string) {
 	result, err := ca.client.Login(context.Background(), &cred)
 	if err != nil {
 		ca.Alert("Failed to request authentication from server. Please try again")
-		return
+		return false
 	}
 
 	switch result.Status {
-	case int32(codes.Unavailable):
+	case int32(codes.Unavailable), int32(codes.Unauthenticated):
 		{
-			ca.Alert(*result.Message)
+			return false
 		}
-	case int32(codes.Unauthenticated):
+	case int32(codes.OK):
 		{
-			ca.Alert(*result.Message)
+			return true
 		}
 	}
+
+	ca.Alert("Unexpected error")
+	return false
 }
 
 func (ca *ClientApp) Modal(p tview.Primitive, width, height int) tview.Primitive {
@@ -130,7 +133,14 @@ func (ca *ClientApp) Login() {
 				ca.username = &username
 
 				password := passwordField.GetText()
-				ca.RequestLogin(password)
+				isAuthenticated := ca.RequestLogin(password)
+				if !isAuthenticated {
+					usernameField.SetText("")
+					passwordField.SetText("")
+				} else {
+					ca.Alert("Login successfully!")
+					ca.JoinChat()
+				}
 			} else {
 				msg := "Cannot access the input. Please try again later."
 				ca.Alert(msg)
@@ -166,4 +176,46 @@ func (ca *ClientApp) Login() {
 func (ca *ClientApp) Exit() {
 	ca.conn.Close()
 	ca.app.Stop()
+}
+
+func (ca *ClientApp) JoinChat() {
+
+	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	flex.SetTitle("Chat Room")
+
+	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
+	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
+
+	messageView := tview.NewTextView().SetTextAlign(tview.AlignLeft)
+	messageFlex := tview.NewFlex().AddItem(messageView, 0, 0, true)
+	messageFlex.SetBorder(true).SetTitle("Message")
+
+	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	inputFlex.SetBorder(true)
+	inputFlex.AddItem(tview.NewTextArea(), 0, 4, true)
+	inputFlex.AddItem(tview.NewButton("Send"), 0, 1, false)
+
+	leftFlex.AddItem(messageView, 0, 9, false)
+	leftFlex.AddItem(inputFlex, 0, 1, false)
+	leftFlex.SetBorder(true)
+
+	onlineClientView := tview.NewList()
+	onlineClientView.SetBorder(true).SetTitle("Online Clients")
+
+	rightFlex.AddItem(onlineClientView, 0, 9, false)
+	rightFlex.AddItem(tview.NewButton("Logout"), 0, 1, false)
+	rightFlex.SetBorder(true)
+
+	flex.AddItem(leftFlex, 0, 3, true)
+	flex.AddItem(rightFlex, 0, 1, false)
+
+	ca.nav.AddAndSwitchToPage("ChatPage", flex, true)
+}
+
+func updateMessageTextView(textView *tview.TextView, message string) {
+	currentText := textView.GetText(false)
+	if currentText != "" {
+		currentText += "\n"
+	}
+	textView.SetText(fmt.Sprintf("%sYou: %s", currentText, message))
 }
