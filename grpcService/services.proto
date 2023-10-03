@@ -59,17 +59,10 @@ message Command { optional string additionalInfo = 1; }
 service ChatRoom {
 
   // broadcast message to every one in room chat
-  rpc SendPublicMessage(ChatMessage) returns (SentMessageStatus);
+  rpc Chat(stream ChatMessage) returns (stream ChatMessage);
 
   // send private message to user (no broadcast)
   rpc SendPrivateMessage(PrivateChatMessage) returns (SentMessageStatus);
-
-  /*
-   * start to listen to server,
-   * create server side stream,
-   * and gain ability to receive message from server
-   */
-  rpc Listen(Command) returns (stream ChatMessage);
 
   // Register for a new client account
   rpc Register(User) returns (AuthenticationResult);

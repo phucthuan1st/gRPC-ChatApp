@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	be "github.com/phucthuan1st/gRPC-ChatRoom/server/backend"
@@ -22,7 +23,8 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	grpcService.RegisterChatRoomServer(grpcServer, &be.ChatServer{})
+	backendServer := be.NewChatServer(os.Args[1], os.Args[2])
+	grpcService.RegisterChatRoomServer(grpcServer, backendServer)
 
 	// Start the gRPC server
 	log.Printf("Starting gRPC server on localhost:%d...", port)

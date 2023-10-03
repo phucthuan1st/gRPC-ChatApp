@@ -4,7 +4,7 @@ go 1.21.1
 
 require (
 	github.com/gotk3/gotk3 v0.6.2
-	github.com/rivo/tview v0.0.0-20230916092115-0ad06c2ea3dd
+	github.com/rivo/tview v0.0.0-20230928053139-9bc1d28d88a9
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 )
@@ -20,5 +20,5 @@ require (
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97 // indirect
 )

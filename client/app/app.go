@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	"github.com/rivo/tview"
@@ -13,12 +12,14 @@ import (
 )
 
 type ClientApp struct {
-	app        *tview.Application
-	username   *string
-	serverAddr *string
-	client     gs.ChatRoomClient
-	conn       *grpc.ClientConn
-	nav        *tview.Pages
+	app         *tview.Application
+	username    *string
+	serverAddr  *string
+	client      gs.ChatRoomClient
+	conn        *grpc.ClientConn
+	nav         *tview.Pages
+	messageView *tview.TextView
+	stream      gs.ChatRoom_ChatClient
 }
 
 func (ca *ClientApp) Init() {
@@ -47,27 +48,28 @@ func (ca *ClientApp) Init() {
 }
 
 func (ca *ClientApp) StartListening() {
-	stream, _ := ca.client.Listen(context.Background(), &gs.Command{AdditionalInfo: ca.username})
+	stream, err := ca.client.Chat(context.Background())
+	if err != nil {
+		ca.Alert("Cannot connect to server")
+	} else {
+		ca.stream = stream
 
-	// start to wait for server message
-	waitc := make(chan struct{})
-	go func() {
-		for {
-			in, err := stream.Recv()
-			if err == io.EOF {
-				// read done.
-				close(waitc)
-				return
-			}
+		ca.stream.Send(&gs.ChatMessage{
+			Sender:  *ca.username,
+			Message: fmt.Sprintf("Hello server from %s!", *ca.username),
+		})
 
-			// TODO: update code to handle incoming message
-			if err != nil {
-				fmt.Printf("Failed to receive a note : %v\n", err) // log
+		go func() {
+			for {
+				msg, err := ca.stream.Recv()
+				if err != nil {
+					ca.Alert("Cannot connect to server")
+				} else {
+					ca.updateMessageTextView(msg.GetSender(), msg.GetMessage())
+				}
 			}
-			fmt.Printf("%s just chat: %s\n", in.GetSender(), in.GetMessage())
-		}
-	}()
-	<-waitc
+		}()
+	}
 }
 
 func (ca *ClientApp) RequestLogin(password string) bool {
@@ -139,6 +141,7 @@ func (ca *ClientApp) Login() {
 					passwordField.SetText("")
 				} else {
 					ca.Alert("Login successfully!")
+					go ca.StartListening()
 					ca.JoinChat()
 				}
 			} else {
@@ -186,16 +189,31 @@ func (ca *ClientApp) JoinChat() {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
-	messageView := tview.NewTextView().SetTextAlign(tview.AlignLeft)
-	messageFlex := tview.NewFlex().AddItem(messageView, 0, 0, true)
+	ca.messageView = tview.NewTextView().SetTextAlign(tview.AlignLeft)
+	messageFlex := tview.NewFlex().AddItem(ca.messageView, 0, 0, true)
 	messageFlex.SetBorder(true).SetTitle("Message")
 
 	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
 	inputFlex.SetBorder(true)
-	inputFlex.AddItem(tview.NewTextArea(), 0, 4, true)
-	inputFlex.AddItem(tview.NewButton("Send"), 0, 1, false)
+	inputArea := tview.NewTextArea()
+	inputFlex.AddItem(inputArea, 0, 4, true)
+	sendBtn := tview.NewButton("Send")
+	sendBtn.SetSelectedFunc(func() {
+		message := inputArea.GetText()
 
-	leftFlex.AddItem(messageView, 0, 9, false)
+		if inputArea.GetText() != "" {
+			inputArea.SetText("", true)
+			ca.updateMessageTextView("You", message)
+
+			ca.stream.Send(&gs.ChatMessage{
+				Sender:  *ca.username,
+				Message: message,
+			})
+		}
+	})
+	inputFlex.AddItem(sendBtn, 0, 1, false)
+
+	leftFlex.AddItem(ca.messageView, 0, 9, false)
 	leftFlex.AddItem(inputFlex, 0, 1, false)
 	leftFlex.SetBorder(true)
 
@@ -203,7 +221,13 @@ func (ca *ClientApp) JoinChat() {
 	onlineClientView.SetBorder(true).SetTitle("Online Clients")
 
 	rightFlex.AddItem(onlineClientView, 0, 9, false)
-	rightFlex.AddItem(tview.NewButton("Logout"), 0, 1, false)
+	logoutBtn := tview.NewButton("Logout")
+	logoutBtn.SetSelectedFunc(func() {
+		ca.stream.CloseSend()
+		ca.Exit()
+		ca.Init()
+	})
+	rightFlex.AddItem(logoutBtn, 0, 1, false)
 	rightFlex.SetBorder(true)
 
 	flex.AddItem(leftFlex, 0, 3, true)
@@ -212,10 +236,10 @@ func (ca *ClientApp) JoinChat() {
 	ca.nav.AddAndSwitchToPage("ChatPage", flex, true)
 }
 
-func updateMessageTextView(textView *tview.TextView, message string) {
-	currentText := textView.GetText(false)
+func (ca *ClientApp) updateMessageTextView(sender, message string) {
+	currentText := ca.messageView.GetText(false)
 	if currentText != "" {
 		currentText += "\n"
 	}
-	textView.SetText(fmt.Sprintf("%sYou: %s", currentText, message))
+	ca.messageView.SetText(fmt.Sprintf("%s%s: %s", currentText, sender, message))
 }
