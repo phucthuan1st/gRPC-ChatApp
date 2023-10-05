@@ -14,6 +14,7 @@ import (
 
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	codes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ChatServer struct {
@@ -102,10 +103,6 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 	// TODO: validate token (later)
 
 	cs.addClientStream(username, stream)
-	defer func() {
-		log.Printf("Client disconnected: %s!\n", username)
-		cs.removeClientStream(username)
-	}()
 
 	/*
 		other messages received from client will be used as messages in chat
@@ -113,8 +110,17 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 	for {
 		msg, err = stream.Recv()
 		if err != nil {
-			log.Fatalf("Error reciving message: %v", err)
-			break
+			s, _ := status.FromError(err)
+			switch s.Code() {
+			case codes.Canceled:
+				log.Printf("Client disconnected: %s!\n", username)
+				cs.removeClientStream(username)
+				return err
+			default:
+				log.Fatalf("Error reciving message: %v", err)
+				cs.removeClientStream(username)
+				return err
+			}
 		}
 		log.Printf("Room chat from %s: %s\n", msg.GetSender(), msg.GetMessage())
 
@@ -132,8 +138,6 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 			}
 		}
 	}
-
-	return err
 }
 
 func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateChatMessage) (*gs.SentMessageStatus, error) {

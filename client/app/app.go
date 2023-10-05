@@ -63,7 +63,8 @@ func (ca *ClientApp) StartListening() {
 			for {
 				msg, err := ca.stream.Recv()
 				if err != nil {
-					ca.Alert("Cannot connect to server")
+					ca.Alert("Disconnected from server")
+					ca.Login()
 				} else {
 					ca.updateMessageTextView(msg.GetSender(), msg.GetMessage())
 				}
