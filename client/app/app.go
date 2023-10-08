@@ -11,18 +11,20 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Client App for gRPC-ChatRoom service usage.
 type ClientApp struct {
 	app         *tview.Application
 	username    *string
 	serverAddr  *string
-	client      gs.ChatRoomClient
+	stub        gs.ChatRoomClient
 	conn        *grpc.ClientConn
-	nav         *tview.Pages
+	navigator   *tview.Pages
 	messageView *tview.TextView
-	stream      gs.ChatRoom_ChatClient
+	chatStream  gs.ChatRoom_ChatClient
 }
 
-func (ca *ClientApp) Init() {
+// Start and run the client application
+func (ca *ClientApp) Start() {
 
 	// backend infomation
 	const port = 55555
@@ -36,35 +38,36 @@ func (ca *ClientApp) Init() {
 	ca.conn, err = grpc.Dial(*ca.serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	ca.app = tview.NewApplication()
-	ca.nav = tview.NewPages()
+	ca.navigator = tview.NewPages()
 
 	if err != nil {
-		ca.Alert("Cannot connect to server")
+		ca.alert("Cannot connect to server")
 	} else {
-		ca.client = gs.NewChatRoomClient(ca.conn)
+		ca.stub = gs.NewChatRoomClient(ca.conn)
 	}
-	ca.Login()
-	ca.app.SetRoot(ca.nav, true).EnableMouse(true).Run()
+	ca.navigateToLogin()
+	ca.app.SetRoot(ca.navigator, true).EnableMouse(true).Run()
 }
 
-func (ca *ClientApp) StartListening() {
-	stream, err := ca.client.Chat(context.Background())
+// Start listening for messages from server
+func (ca *ClientApp) startListening() {
+	stream, err := ca.stub.Chat(context.Background())
 	if err != nil {
-		ca.Alert("Cannot connect to server")
+		ca.alert("Cannot connect to server")
 	} else {
-		ca.stream = stream
+		ca.chatStream = stream
 
-		ca.stream.Send(&gs.ChatMessage{
+		ca.chatStream.Send(&gs.ChatMessage{
 			Sender:  *ca.username,
 			Message: fmt.Sprintf("Hello server from %s!", *ca.username),
 		})
 
 		go func() {
 			for {
-				msg, err := ca.stream.Recv()
+				msg, err := ca.chatStream.Recv()
 				if err != nil {
-					ca.Alert("Disconnected from server")
-					ca.Login()
+					ca.alert("Disconnected from server")
+					return
 				} else {
 					ca.updateMessageTextView(msg.GetSender(), msg.GetMessage())
 				}
@@ -73,15 +76,16 @@ func (ca *ClientApp) StartListening() {
 	}
 }
 
-func (ca *ClientApp) RequestLogin(password string) bool {
+// Request for login authentication from the server
+func (ca *ClientApp) requestLogin(password string) bool {
 	cred := gs.UserLoginCredentials{
 		Username: *ca.username,
 		Password: password,
 	}
 
-	result, err := ca.client.Login(context.Background(), &cred)
+	result, err := ca.stub.Login(context.Background(), &cred)
 	if err != nil {
-		ca.Alert("Failed to request authentication from server. Please try again")
+		ca.alert("Failed to request authentication from server. Please try again")
 		return false
 	}
 
@@ -96,11 +100,12 @@ func (ca *ClientApp) RequestLogin(password string) bool {
 		}
 	}
 
-	ca.Alert("Unexpected error")
+	ca.alert("Unexpected error")
 	return false
 }
 
-func (ca *ClientApp) Modal(p tview.Primitive, width, height int) tview.Primitive {
+// An alert modal
+func (ca *ClientApp) modal(p tview.Primitive, width, height int) tview.Primitive {
 	return tview.NewFlex().
 		AddItem(nil, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
@@ -110,24 +115,27 @@ func (ca *ClientApp) Modal(p tview.Primitive, width, height int) tview.Primitive
 		AddItem(nil, 0, 1, false)
 }
 
-func (ca *ClientApp) Alert(msg string) {
+// Alert a message to the center of the screen
+func (ca *ClientApp) alert(msg string) {
 
 	modal := tview.NewModal().SetText(msg).AddButtons([]string{"Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Cancel" {
-				ca.nav.RemovePage("Alert")
+				ca.navigator.RemovePage("Alert")
 			}
 		})
 
-	ca.nav.AddAndSwitchToPage("Alert", ca.Modal(modal, 40, 20), false)
+	ca.navigator.AddAndSwitchToPage("Alert", ca.modal(modal, 40, 20), false)
 }
 
-func (ca *ClientApp) Login() {
+// a standart login form
+func (ca *ClientApp) createLoginForm() *tview.Form {
 	form := tview.NewForm()
 
 	form.AddInputField("Username", "", 30, nil, nil).
 		AddPasswordField("Password", "", 30, '*', nil).
 		AddButton("Login", func() {
+			// Retrieve values from the form fields
 			usernameField, usernameFieldFound := form.GetFormItemByLabel("Username").(*tview.InputField)
 			passwordField, passwordFieldFound := form.GetFormItemByLabel("Password").(*tview.InputField)
 
@@ -136,22 +144,22 @@ func (ca *ClientApp) Login() {
 				ca.username = &username
 
 				password := passwordField.GetText()
-				isAuthenticated := ca.RequestLogin(password)
+				isAuthenticated := ca.requestLogin(password)
 				if !isAuthenticated {
 					usernameField.SetText("")
 					passwordField.SetText("")
 				} else {
-					ca.Alert("Login successfully!")
-					go ca.StartListening()
-					ca.JoinChat()
+					ca.alert("Login successfully!")
+					go ca.startListening()
+					ca.navigateToPublicChatRoom()
 				}
 			} else {
 				msg := "Cannot access the input. Please try again later."
-				ca.Alert(msg)
+				ca.alert(msg)
 			}
 		}).
-		AddButton("Register", func() {
-			ca.nav.SwitchToPage("Register")
+		AddButton("Move to Register", func() {
+			ca.navigateToRegister()
 		}).
 		AddButton("Quit", func() {
 			ca.Exit()
@@ -159,31 +167,139 @@ func (ca *ClientApp) Login() {
 
 	form.SetBorder(true).SetTitle("gRPC Chat Room").SetTitleAlign(tview.AlignLeft)
 
+	return form
+}
+
+// a standart registration form
+func (ca *ClientApp) createUserRegistrationForm() *tview.Form {
+
+	form := tview.NewForm()
+
+	form.AddInputField("Username", "", 30, nil, nil).
+		AddPasswordField("Password", "", 30, '*', nil).
+		AddInputField("Full Name", "", 30, nil, nil).
+		AddInputField("Email (optional)", "", 30, nil, nil).
+		AddInputField("Birthdate (optional)", "", 30, nil, nil).
+		AddInputField("Street (optional)", "", 30, nil, nil).
+		AddInputField("City (optional)", "", 30, nil, nil).
+		AddInputField("Country", "", 30, nil, nil).
+		AddButton("Register", func() {
+			// Retrieve values from the form fields
+			usernameField, _ := form.GetFormItemByLabel("Username").(*tview.InputField)
+			passwordField, _ := form.GetFormItemByLabel("Password").(*tview.InputField)
+			fullNameField, _ := form.GetFormItemByLabel("Full Name").(*tview.InputField)
+			emailField, _ := form.GetFormItemByLabel("Email (optional)").(*tview.InputField)
+			birthdateField, _ := form.GetFormItemByLabel("Birthdate (optional)").(*tview.InputField)
+			streetField, _ := form.GetFormItemByLabel("Street (optional)").(*tview.InputField)
+			cityField, _ := form.GetFormItemByLabel("City (optional)").(*tview.InputField)
+			countryField, _ := form.GetFormItemByLabel("Country").(*tview.InputField)
+
+			// Create a User message based on the form values
+			user := &gs.User{
+				Username: usernameField.GetText(),
+				Password: passwordField.GetText(),
+				FullName: fullNameField.GetText(),
+			}
+
+			// Set optional fields if they are not empty
+			if emailField.GetText() != "" {
+				email := emailField.GetText()
+				user.Email = &email
+			}
+			if birthdateField.GetText() != "" {
+				birthdate := birthdateField.GetText()
+				user.Birthdate = &birthdate
+			}
+			if streetField.GetText() != "" || cityField.GetText() != "" || countryField.GetText() != "" {
+				street := streetField.GetText()
+				city := cityField.GetText()
+				user.Address = &gs.Address{
+					Street:  &street,
+					City:    &city,
+					Country: countryField.GetText(),
+				}
+			}
+
+			// Handle the user registration logic with the created user message
+			result, err := ca.stub.Register(context.Background(), user)
+			if err != nil {
+				ca.alert(err.Error())
+			} else {
+				ca.alert(fmt.Sprintf("User %s registered successfully with code %d!", result.GetUsername(), result.GetStatus()))
+				ca.navigateToLogin()
+			}
+		}).
+		AddButton("Move to Login", func() {
+			ca.navigateToLogin()
+		}).
+		AddButton("Quit", func() {
+			ca.Exit()
+		})
+
+	form.SetBorder(true).SetTitle("gRPC Chat Room").SetTitleAlign(tview.AlignLeft)
+
+	return form
+}
+
+// spacer for flex layout
+func (ca *ClientApp) createSpacer() *tview.TextView {
 	// Add an empty text view as a spacer to push the form to the center
 	spacer := tview.NewTextView().
 		SetText("").
 		SetTextAlign(tview.AlignCenter).
 		SetDynamicColors(true)
 
-	// Set the flex properties to center the form
-	flex := tview.NewFlex().
-		AddItem(spacer, 0, 1, false). // left spacer
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-						AddItem(spacer, 0, 1, false). // top spacer
-						AddItem(form, 0, 1, true).
-						AddItem(spacer, 0, 1, false), 0, 1, false). // bottom spacer
-		AddItem(spacer, 0, 1, false) // right spacer
-
-	ca.nav.AddAndSwitchToPage("Login", flex, true)
+	return spacer
 }
 
+// a flex layout form with a login form and a register form in the center
+func (ca *ClientApp) createCenterFlexForm(form *tview.Form, long_form bool) *tview.Flex {
+	// Add an empty text view as a spacer to push the form to the center
+	spacer := ca.createSpacer()
+
+	mid_flex := tview.NewFlex().SetDirection(tview.FlexRow)
+
+	if long_form {
+		mid_flex.
+			AddItem(spacer, 0, 1, false). // top spacer
+			AddItem(form, 0, 4, true).
+			AddItem(spacer, 0, 1, false) // bottom spacer
+	} else {
+		mid_flex.
+			AddItem(spacer, 0, 1, false). // top spacer
+			AddItem(form, 0, 1, true).
+			AddItem(spacer, 0, 1, false) // bottom spacer
+	}
+
+	// Set the flex properties to center the form
+	flex := tview.NewFlex().
+		AddItem(spacer, 0, 1, false).   // left spacer
+		AddItem(mid_flex, 0, 2, false). // bottom spacer
+		AddItem(spacer, 0, 1, false)    // right spacer
+
+	return flex
+}
+
+// Login page navigation
+func (ca *ClientApp) navigateToLogin() {
+	flex := ca.createCenterFlexForm(ca.createLoginForm(), false)
+	ca.navigator.AddAndSwitchToPage("Login", flex, true)
+}
+
+// Register page navigation
+func (ca *ClientApp) navigateToRegister() {
+	flex := ca.createCenterFlexForm(ca.createUserRegistrationForm(), true)
+	ca.navigator.AddAndSwitchToPage("Register", flex, true)
+}
+
+// Quit the application
 func (ca *ClientApp) Exit() {
 	ca.conn.Close()
 	ca.app.Stop()
 }
 
-func (ca *ClientApp) JoinChat() {
-
+// create a chat room page in flex
+func (ca *ClientApp) CreateChatRoom() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
 	flex.SetTitle("Chat Room")
 
@@ -206,7 +322,7 @@ func (ca *ClientApp) JoinChat() {
 			inputArea.SetText("", true)
 			ca.updateMessageTextView("You", message)
 
-			ca.stream.Send(&gs.ChatMessage{
+			ca.chatStream.Send(&gs.ChatMessage{
 				Sender:  *ca.username,
 				Message: message,
 			})
@@ -224,9 +340,8 @@ func (ca *ClientApp) JoinChat() {
 	rightFlex.AddItem(onlineClientView, 0, 9, false)
 	logoutBtn := tview.NewButton("Logout")
 	logoutBtn.SetSelectedFunc(func() {
-		ca.stream.CloseSend()
 		ca.Exit()
-		ca.Init()
+		ca.Start()
 	})
 	rightFlex.AddItem(logoutBtn, 0, 1, false)
 	rightFlex.SetBorder(true)
@@ -234,9 +349,16 @@ func (ca *ClientApp) JoinChat() {
 	flex.AddItem(leftFlex, 0, 3, true)
 	flex.AddItem(rightFlex, 0, 1, false)
 
-	ca.nav.AddAndSwitchToPage("ChatPage", flex, true)
+	return flex
 }
 
+// navigate to the public chat room page
+func (ca *ClientApp) navigateToPublicChatRoom() {
+	flex := ca.CreateChatRoom()
+	ca.navigator.AddAndSwitchToPage("ChatPage", flex, true)
+}
+
+// update the message text view with the new incomming message
 func (ca *ClientApp) updateMessageTextView(sender, message string) {
 	currentText := ca.messageView.GetText(false)
 	if currentText != "" {

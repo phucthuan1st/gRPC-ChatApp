@@ -15,18 +15,30 @@ message Address {
   string country = 3;
 }
 
-// User infomation, created when register, and retrieve when needed
+// User infomation, created when register
 message User {
   string username = 1;
   string password = 2;
-  string full_name = 4;
-  optional string email = 3;
+  string full_name = 3;
+  optional string email = 4;
   optional string birthdate = 5;
   optional Address address = 6;
 }
 
+// User infomation, retrieve when needed
+message PublicUserInfo {
+  string username = 1;
+  string full_name = 2;
+  optional string email = 3;
+  optional string birthdate = 4;
+  optional Address address = 5;
+}
+
 // A list of user
 message UserList { repeated User user = 1; }
+
+// Public user list
+message PublicUserInfoList { repeated PublicUserInfo user = 1; }
 
 // Authenticate result when register or login
 message AuthenticationResult {
@@ -67,12 +79,15 @@ service ChatRoom {
   // Register for a new client account
   rpc Register(User) returns (AuthenticationResult);
 
+  // like a user's message, default to their last message
+  rpc LikeComment(Command) returns (SentMessageStatus);
+
   // login using a pair of username and password
   rpc Login(UserLoginCredentials) returns (AuthenticationResult);
 
   // Get a list of information of connected peers or specific peers
-  rpc GetConnectedPeers(Command) returns (UserList);
+  rpc GetConnectedPeers(Command) returns (PublicUserInfoList);
 
   // Get a peer information (except password)
-  rpc GetPeerInfomations(Command) returns (User);
+  rpc GetPeerInfomations(Command) returns (PublicUserInfo);
 }

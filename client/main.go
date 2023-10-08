@@ -6,5 +6,6 @@ import (
 
 func main() {
 	client := app.ClientApp{}
-	client.Init()
+	client.Start()
+	defer client.Exit()
 }
