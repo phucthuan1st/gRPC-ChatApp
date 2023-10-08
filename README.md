@@ -29,9 +29,9 @@ Before you can run this application, make sure you have the following installed:
 
 - **Go (Golang):** You can download and install Go from [here](https://golang.org/dl/).
 - **gRPC for Go:** Follow the gRPC installation guide for Go [here](https://grpc.io/docs/languages/go/quickstart/).
-- **tview:** Install go-gtk by following the instructions in the [tview repository](https://github.com/rivo/tview).
+- **tview:** Install tview by following the instructions in the [tview repository](https://github.com/rivo/tview).
 
-But do not worry. I will include gRPC and go-gtk in go module config (go.mod), just follow the Usage for an easy use.
+But do not worry. I will include gRPC and tview in go module config (go.mod) and vendor, just follow the Usage for an easy use.
 
 <br>
 
