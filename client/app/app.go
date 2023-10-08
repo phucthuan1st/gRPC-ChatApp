@@ -298,23 +298,20 @@ func (ca *ClientApp) Exit() {
 	ca.app.Stop()
 }
 
-// create a chat room page in flex
-func (ca *ClientApp) CreateChatRoom() *tview.Flex {
-	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	flex.SetTitle("Chat Room")
-
+// left area of chat room layout
+func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
-	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
+	// Message view displays the chat room messages from both current user and other users
 	ca.messageView = tview.NewTextView().SetTextAlign(tview.AlignLeft)
-	messageFlex := tview.NewFlex().AddItem(ca.messageView, 0, 0, true)
-	messageFlex.SetBorder(true).SetTitle("Message")
+	ca.messageView.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
 
-	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	inputFlex.SetBorder(true)
+	// Input flex contains the input field and the send button
 	inputArea := tview.NewTextArea()
-	inputFlex.AddItem(inputArea, 0, 4, true)
+	inputArea.SetBorder(true)
+
 	sendBtn := tview.NewButton("Send")
+	sendBtn.SetBorder(true)
 	sendBtn.SetSelectedFunc(func() {
 		message := inputArea.GetText()
 
@@ -328,11 +325,22 @@ func (ca *ClientApp) CreateChatRoom() *tview.Flex {
 			})
 		}
 	})
+
+	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	inputFlex.AddItem(inputArea, 0, 5, true)
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
-	leftFlex.AddItem(ca.messageView, 0, 9, false)
+	// Add the message flex and the input flex to the left flex
+	leftFlex.AddItem(ca.messageView, 0, 9, true)
 	leftFlex.AddItem(inputFlex, 0, 1, false)
 	leftFlex.SetBorder(true)
+
+	return leftFlex
+}
+
+// right area of chat room layout
+func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
+	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	onlineClientView := tview.NewList()
 	onlineClientView.SetBorder(true).SetTitle("Online Clients")
@@ -346,7 +354,18 @@ func (ca *ClientApp) CreateChatRoom() *tview.Flex {
 	rightFlex.AddItem(logoutBtn, 0, 1, false)
 	rightFlex.SetBorder(true)
 
-	flex.AddItem(leftFlex, 0, 3, true)
+	return rightFlex
+}
+
+// create a chat room page in flex
+func (ca *ClientApp) CreateChatRoom() *tview.Flex {
+	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	flex.SetTitle("Chat Room")
+
+	leftFlex := ca.createChatRoomLeftFlex()
+	rightFlex := ca.createChatRoomRightFlex()
+
+	flex.AddItem(leftFlex, 0, 3, false)
 	flex.AddItem(rightFlex, 0, 1, false)
 
 	return flex

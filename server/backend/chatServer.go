@@ -3,6 +3,8 @@ package backend
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha1"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -18,6 +20,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var hasher = sha1.New()
+
 type ChatServer struct {
 	registeredAccount     gs.UserList
 	loggedInAccount       map[string]bool
@@ -31,6 +35,8 @@ type ChatServer struct {
 
 // ---------------------------------------------------------//
 // ------------------ HELPER -------------------------------//
+
+// get the client stream for the given username
 func (cs *ChatServer) getClientStream(username string) gs.ChatRoom_ChatServer {
 	stream, ok := cs.clientStream[username]
 	if ok {
@@ -46,9 +52,10 @@ func (cs *ChatServer) isConnected(username string) bool {
 	return ok && stream != nil
 }
 
+// Check if a peer is logged in and online
 func (cs *ChatServer) isLoggedIn(username string) bool {
-	_, ok := cs.loggedInAccount[username]
-	return ok
+	online, ok := cs.loggedInAccount[username]
+	return ok && online
 }
 
 // Load credentials from a json file
@@ -69,6 +76,7 @@ func (cs *ChatServer) loadUserInformation(filePath string) error {
 	return nil
 }
 
+// write the user information to a json file
 func (cs *ChatServer) writeUserInformation(filePath string) error {
 	// Marshal the registeredAccount struct to JSON
 	cs.mu.Lock()
@@ -87,12 +95,14 @@ func (cs *ChatServer) writeUserInformation(filePath string) error {
 	return nil
 }
 
+// add the client stream to the connected client stream map
 func (cs *ChatServer) addClientStream(username string, stream gs.ChatRoom_ChatServer) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	cs.clientStream[username] = stream
 }
 
+// delete a client stream from the map when cleint is no longer online
 func (cs *ChatServer) removeClientStream(username string) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -107,24 +117,29 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 
 	/*
 		first message received from client will be used as username
-		and msg will be taken as validtion token (genrated when register)
 	*/
 	msg, err := stream.Recv()
 	if err != nil {
 		log.Printf("Error reciving message: %v", err)
 		return err
 	}
+
 	username := msg.GetSender()
+	log.Printf("User %s request to join the chat room!\n", username)
+
+	// check if the user is already connected
 	if !cs.isLoggedIn(username) {
 		log.Printf("Unlogged in user: %s is not permit to chat!!!\n", username)
 		return errors.New("Unlogged in user: " + username + " is not permit to chat!!!")
 	}
 
-	token := msg.GetMessage()
-	log.Printf("User %s joined the chat room with token %s!\n", username, token)
+	// welcome user to join the chat room
+	stream.Send(&gs.ChatMessage{
+		Message: fmt.Sprintf("Welcome to the chat room %s !", username),
+		Sender:  "Server",
+	})
 
-	// TODO: validate token (later)
-
+	log.Printf("User %s is allowed to join the chat room!\n", username)
 	cs.addClientStream(username, stream)
 
 	/*
@@ -152,7 +167,7 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 			Check for previous message likes.
 			If previous message are not enough 2 likes, prevent them from sending the message
 		*/
-		log.Printf("Room chat request from %s: %s\n", msg.GetSender(), msg.GetMessage())
+		log.Printf("Room chat request from %s: %s\n", username, msg.GetMessage())
 
 		if cs.messageLikes[username] < 2 {
 			log.Printf("User %s has not enough likes to send new message to the room!\n", username)
@@ -170,22 +185,29 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 		}
 
 		// Broadcast message to all other users
-		for recipient, recvStream := range cs.clientStream {
-			if recipient != msg.GetSender() {
-				err := recvStream.Send(&gs.ChatMessage{
-					Message: msg.GetMessage(),
-					Sender:  msg.GetSender(),
-				})
-
-				if err != nil {
-					log.Printf("Error sending message to %s %v\n", recipient, err)
-				}
-			}
-		}
-		cs.messageLikes[username] = 0
+		cs.mu.Lock()
+		cs.broadcast(msg)
+		cs.mu.Unlock()
 	}
 }
 
+func (cs *ChatServer) broadcast(msg *gs.ChatMessage) {
+	for recipient, recvStream := range cs.clientStream {
+		if recipient != msg.GetSender() {
+			err := recvStream.Send(&gs.ChatMessage{
+				Message: msg.GetMessage(),
+				Sender:  msg.GetSender(),
+			})
+
+			if err != nil {
+				log.Printf("Error sending message to %s %v\n", recipient, err)
+			}
+		}
+	}
+	cs.messageLikes[msg.GetSender()] = 0
+}
+
+// handle like command from client
 func (cs *ChatServer) LikeComment(ctx context.Context, command *gs.Command) (*gs.SentMessageStatus, error) {
 	cmd := strings.Split(*command.AdditionalInfo, " ")
 	sender := cmd[0]
@@ -207,6 +229,7 @@ func (cs *ChatServer) LikeComment(ctx context.Context, command *gs.Command) (*gs
 	}, nil
 }
 
+// handle private message from client to client
 func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateChatMessage) (*gs.SentMessageStatus, error) {
 
 	log.Printf("%s sent a message to %s: %s\n", msg.Sender, msg.Recipent, msg.Message)
@@ -240,48 +263,82 @@ func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateCha
 
 // Login to server using registered account (username and password)
 func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*gs.AuthenticationResult, error) {
+	hasher.Write([]byte(in.GetPassword()))
+
+	log.Printf("Login request from %s: %s\n", in.Username, base64.StdEncoding.EncodeToString(hasher.Sum(nil)))
 
 	result := gs.AuthenticationResult{}
 	result.Username = in.Username
-	result.Status = int32(codes.Unauthenticated)
 
+	// check for user that is already logged in or not
 	if cs.isLoggedIn(in.Username) {
 		msg := fmt.Sprintf("Failed to login as %s: Already login from another place!", in.Username)
 		result.Message = &msg
-		log.Printf("Failed to login as %s: Already login from another place!", in.Username)
-		return &result, nil
-	} else if in.Password != cs.serverPassword {
-		msg := fmt.Sprintf("Failed to login as %s: Wrong password!", in.Username)
-		result.Message = &msg
-		log.Printf("Failed to login as %s: Wrong password!", in.Username)
+		result.Status = int32(codes.AlreadyExists)
+
+		log.Println(msg)
 		return &result, nil
 	}
 
-	msg := "Login successfully!!!!"
-	result.Message = &msg
-	log.Printf("%s was just logged in\n", in.Username)
-	result.Status = int32(codes.OK)
+	// allow user to login with correct username and password
+	for _, user := range cs.registeredAccount.User {
+		if user.Username != in.Username {
+			continue
+		}
+
+		if in.Password != user.Password {
+			msg := fmt.Sprintf("Failed to login as %s: Wrong password!", in.Username)
+			result.Message = &msg
+			result.Status = int32(codes.Unauthenticated)
+
+			log.Println(msg)
+			return &result, nil
+		}
+	}
+
+	// handle successful login
 	cs.loggedInAccount[in.Username] = true
 	cs.messageLikes[in.Username] = 2
 
+	msg := "Login successfully!!!!"
+	result.Message = &msg
+	result.Status = int32(codes.OK)
+
+	log.Printf("%s was just logged in\n", in.Username)
 	return &result, nil
 }
 
+// handle register new account command from client
 func (cs *ChatServer) Register(ctx context.Context, user *gs.User) (*gs.AuthenticationResult, error) {
+	log.Printf("Register request from %s\n", user.Username)
+
+	result := gs.AuthenticationResult{}
+	result.Username = user.Username
+
+	// Handle blank username or password case
+	if user.Username == "" || user.Password == "" {
+		msg := "Blank username or password is not allowed!"
+		log.Println(msg)
+		return nil, errors.New(msg)
+	}
+
+	// handle duplicate username case
 	for _, registeredUser := range cs.registeredAccount.User {
 		if registeredUser.Username == user.Username {
 
-			msg := fmt.Sprintf("Username %s is already taken!", user.Username)
+			msg := fmt.Sprintf("Username %s is already taken! Register failed", user.Username)
 			authenticateMsg := gs.AuthenticationResult{
 				Username: user.Username,
 				Status:   int32(codes.AlreadyExists),
 				Message:  &msg,
 			}
 
-			log.Printf("Username %s is already taken! Register failed\n", user.Username)
-			return &authenticateMsg, errors.New("Username " + user.Username + " is already taken!")
+			log.Println(msg)
+			return &authenticateMsg, errors.New(msg)
 		}
 	}
+
+	// validated case
 	cs.registeredAccount.User = append(cs.registeredAccount.User, user)
 	err := cs.writeUserInformation(cs.pathToUserCredentials)
 
@@ -292,6 +349,34 @@ func (cs *ChatServer) Register(ctx context.Context, user *gs.User) (*gs.Authenti
 		log.Printf("Register failed: %s\n", err.Error())
 		return &gs.AuthenticationResult{Username: user.Username, Status: int32(codes.Internal)}, err
 	}
+}
+
+// retrieve information about a user from connected users list
+func (cs *ChatServer) GetPeerInfomations(ctx context.Context, cmd *gs.Command) (*gs.PublicUserInfo, error) {
+	username := cmd.GetAdditionalInfo()
+	isOnline := cs.isConnected(username)
+
+	for _, user := range cs.registeredAccount.User {
+		if user.Username == username {
+			result := &gs.PublicUserInfo{
+				Username:  user.Username,
+				FullName:  user.FullName,
+				Address:   user.GetAddress(),
+				Birthdate: user.Birthdate,
+				Email:     user.Email,
+			}
+
+			if !isOnline {
+				result.Status = int32(codes.Unknown)
+			} else {
+				result.Status = int32(codes.OK)
+			}
+
+			return result, nil
+		}
+	}
+
+	return nil, errors.New(fmt.Sprintf("User %s not found or offline!", username))
 }
 
 // ---------------------------------------------------------//

@@ -26,9 +26,12 @@ func main() {
 	backendServer := be.NewChatServer(os.Args[1], os.Args[2])
 	grpcService.RegisterChatRoomServer(grpcServer, backendServer)
 
+	defer grpcServer.GracefulStop()
+
 	// Start the gRPC server
 	log.Printf("Starting gRPC server on localhost:%d...", port)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+
 }
