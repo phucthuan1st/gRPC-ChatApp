@@ -29,13 +29,13 @@ type ChatRoomClient interface {
 	// Register for a new client account
 	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*AuthenticationResult, error)
 	// like a user's message, default to their last message
-	LikeComment(ctx context.Context, in *Command, opts ...grpc.CallOption) (*SentMessageStatus, error)
+	LikeComment(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*SentMessageStatus, error)
 	// login using a pair of username and password
 	Login(ctx context.Context, in *UserLoginCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error)
 	// Get a list of information of connected peers or specific peers
-	GetConnectedPeers(ctx context.Context, in *Command, opts ...grpc.CallOption) (*PublicUserInfoList, error)
+	GetConnectedPeers(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*PublicUserInfoList, error)
 	// Get a peer information (except password)
-	GetPeerInfomations(ctx context.Context, in *Command, opts ...grpc.CallOption) (*PublicUserInfo, error)
+	GetPeerInfomations(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*PublicUserInfo, error)
 }
 
 type chatRoomClient struct {
@@ -95,7 +95,7 @@ func (c *chatRoomClient) Register(ctx context.Context, in *User, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *chatRoomClient) LikeComment(ctx context.Context, in *Command, opts ...grpc.CallOption) (*SentMessageStatus, error) {
+func (c *chatRoomClient) LikeComment(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*SentMessageStatus, error) {
 	out := new(SentMessageStatus)
 	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/LikeComment", in, out, opts...)
 	if err != nil {
@@ -113,7 +113,7 @@ func (c *chatRoomClient) Login(ctx context.Context, in *UserLoginCredentials, op
 	return out, nil
 }
 
-func (c *chatRoomClient) GetConnectedPeers(ctx context.Context, in *Command, opts ...grpc.CallOption) (*PublicUserInfoList, error) {
+func (c *chatRoomClient) GetConnectedPeers(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*PublicUserInfoList, error) {
 	out := new(PublicUserInfoList)
 	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/GetConnectedPeers", in, out, opts...)
 	if err != nil {
@@ -122,7 +122,7 @@ func (c *chatRoomClient) GetConnectedPeers(ctx context.Context, in *Command, opt
 	return out, nil
 }
 
-func (c *chatRoomClient) GetPeerInfomations(ctx context.Context, in *Command, opts ...grpc.CallOption) (*PublicUserInfo, error) {
+func (c *chatRoomClient) GetPeerInfomations(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*PublicUserInfo, error) {
 	out := new(PublicUserInfo)
 	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/GetPeerInfomations", in, out, opts...)
 	if err != nil {
@@ -142,13 +142,13 @@ type ChatRoomServer interface {
 	// Register for a new client account
 	Register(context.Context, *User) (*AuthenticationResult, error)
 	// like a user's message, default to their last message
-	LikeComment(context.Context, *Command) (*SentMessageStatus, error)
+	LikeComment(context.Context, *UserRequest) (*SentMessageStatus, error)
 	// login using a pair of username and password
 	Login(context.Context, *UserLoginCredentials) (*AuthenticationResult, error)
 	// Get a list of information of connected peers or specific peers
-	GetConnectedPeers(context.Context, *Command) (*PublicUserInfoList, error)
+	GetConnectedPeers(context.Context, *UserRequest) (*PublicUserInfoList, error)
 	// Get a peer information (except password)
-	GetPeerInfomations(context.Context, *Command) (*PublicUserInfo, error)
+	GetPeerInfomations(context.Context, *UserRequest) (*PublicUserInfo, error)
 	mustEmbedUnimplementedChatRoomServer()
 }
 
@@ -165,16 +165,16 @@ func (UnimplementedChatRoomServer) SendPrivateMessage(context.Context, *PrivateC
 func (UnimplementedChatRoomServer) Register(context.Context, *User) (*AuthenticationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedChatRoomServer) LikeComment(context.Context, *Command) (*SentMessageStatus, error) {
+func (UnimplementedChatRoomServer) LikeComment(context.Context, *UserRequest) (*SentMessageStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LikeComment not implemented")
 }
 func (UnimplementedChatRoomServer) Login(context.Context, *UserLoginCredentials) (*AuthenticationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedChatRoomServer) GetConnectedPeers(context.Context, *Command) (*PublicUserInfoList, error) {
+func (UnimplementedChatRoomServer) GetConnectedPeers(context.Context, *UserRequest) (*PublicUserInfoList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetConnectedPeers not implemented")
 }
-func (UnimplementedChatRoomServer) GetPeerInfomations(context.Context, *Command) (*PublicUserInfo, error) {
+func (UnimplementedChatRoomServer) GetPeerInfomations(context.Context, *UserRequest) (*PublicUserInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPeerInfomations not implemented")
 }
 func (UnimplementedChatRoomServer) mustEmbedUnimplementedChatRoomServer() {}
@@ -253,7 +253,7 @@ func _ChatRoom_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 func _ChatRoom_LikeComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Command)
+	in := new(UserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func _ChatRoom_LikeComment_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/grpcService.ChatRoom/LikeComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatRoomServer).LikeComment(ctx, req.(*Command))
+		return srv.(ChatRoomServer).LikeComment(ctx, req.(*UserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -289,7 +289,7 @@ func _ChatRoom_Login_Handler(srv interface{}, ctx context.Context, dec func(inte
 }
 
 func _ChatRoom_GetConnectedPeers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Command)
+	in := new(UserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -301,13 +301,13 @@ func _ChatRoom_GetConnectedPeers_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: "/grpcService.ChatRoom/GetConnectedPeers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatRoomServer).GetConnectedPeers(ctx, req.(*Command))
+		return srv.(ChatRoomServer).GetConnectedPeers(ctx, req.(*UserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatRoom_GetPeerInfomations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Command)
+	in := new(UserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -319,7 +319,7 @@ func _ChatRoom_GetPeerInfomations_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/grpcService.ChatRoom/GetPeerInfomations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatRoomServer).GetPeerInfomations(ctx, req.(*Command))
+		return srv.(ChatRoomServer).GetPeerInfomations(ctx, req.(*UserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

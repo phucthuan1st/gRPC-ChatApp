@@ -32,14 +32,16 @@ message PublicUserInfo {
   optional string email = 3;
   optional string birthdate = 4;
   optional Address address = 5;
-  int32 status = 6;
 }
 
 // A list of user
 message UserList { repeated User user = 1; }
 
 // Public user list
-message PublicUserInfoList { repeated PublicUserInfo user = 1; }
+message PublicUserInfoList {
+  repeated string username = 1;
+  repeated string status = 2;
+}
 
 // Authenticate result when register or login
 message AuthenticationResult {
@@ -52,6 +54,7 @@ message AuthenticationResult {
 message ChatMessage {
   string sender = 1;
   string message = 2;
+  optional int32 private = 3;
 }
 
 // A message to use in private chat
@@ -67,7 +70,10 @@ message SentMessageStatus {
   int32 status = 3;
 }
 
-message Command { optional string additionalInfo = 1; }
+message UserRequest {
+  string sender = 1;
+  optional string target = 2;
+}
 
 service ChatRoom {
 
@@ -81,14 +87,14 @@ service ChatRoom {
   rpc Register(User) returns (AuthenticationResult);
 
   // like a user's message, default to their last message
-  rpc LikeComment(Command) returns (SentMessageStatus);
+  rpc LikeComment(UserRequest) returns (SentMessageStatus);
 
   // login using a pair of username and password
   rpc Login(UserLoginCredentials) returns (AuthenticationResult);
 
   // Get a list of information of connected peers or specific peers
-  rpc GetConnectedPeers(Command) returns (PublicUserInfoList);
+  rpc GetConnectedPeers(UserRequest) returns (PublicUserInfoList);
 
   // Get a peer information (except password)
-  rpc GetPeerInfomations(Command) returns (PublicUserInfo);
+  rpc GetPeerInfomations(UserRequest) returns (PublicUserInfo);
 }

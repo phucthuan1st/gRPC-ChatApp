@@ -13,14 +13,15 @@ import (
 
 // Client App for gRPC-ChatRoom service usage.
 type ClientApp struct {
-	app         *tview.Application
-	username    *string
-	serverAddr  *string
-	stub        gs.ChatRoomClient
-	conn        *grpc.ClientConn
-	navigator   *tview.Pages
-	messageView *tview.TextView
-	chatStream  gs.ChatRoom_ChatClient
+	app                 *tview.Application
+	username            *string
+	serverAddr          *string
+	stub                gs.ChatRoomClient
+	conn                *grpc.ClientConn
+	navigator           *tview.Pages
+	messageList         *tview.List
+	connectedClientList *tview.List
+	chatStream          gs.ChatRoom_ChatClient
 }
 
 // Start and run the client application
@@ -69,7 +70,7 @@ func (ca *ClientApp) startListening() {
 					ca.alert("Disconnected from server")
 					return
 				} else {
-					ca.updateMessageTextView(msg.GetSender(), msg.GetMessage())
+					ca.updateMessageList(msg.GetSender(), msg.GetMessage())
 				}
 			}
 		}()
@@ -303,8 +304,8 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	// Message view displays the chat room messages from both current user and other users
-	ca.messageView = tview.NewTextView().SetTextAlign(tview.AlignLeft)
-	ca.messageView.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
+	ca.messageList = tview.NewList()
+	ca.messageList.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
 
 	// Input flex contains the input field and the send button
 	inputArea := tview.NewTextArea()
@@ -315,14 +316,15 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	sendBtn.SetSelectedFunc(func() {
 		message := inputArea.GetText()
 
-		if inputArea.GetText() != "" {
-			inputArea.SetText("", true)
-			ca.updateMessageTextView("You", message)
+		if message != "" {
+			ca.updateMessageList("You", message)
 
 			ca.chatStream.Send(&gs.ChatMessage{
 				Sender:  *ca.username,
 				Message: message,
 			})
+
+			inputArea.SetText("", true)
 		}
 	})
 
@@ -331,7 +333,7 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
 	// Add the message flex and the input flex to the left flex
-	leftFlex.AddItem(ca.messageView, 0, 9, true)
+	leftFlex.AddItem(ca.messageList, 0, 9, true)
 	leftFlex.AddItem(inputFlex, 0, 1, false)
 	leftFlex.SetBorder(true)
 
@@ -342,15 +344,23 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
-	onlineClientView := tview.NewList()
-	onlineClientView.SetBorder(true).SetTitle("Online Clients")
+	refreshBtn := tview.NewButton("Refresh")
+	refreshBtn.SetBorder(true)
+	refreshBtn.SetSelectedFunc(func() {
+		ca.updateOnlineClientsList()
+	})
 
-	rightFlex.AddItem(onlineClientView, 0, 9, false)
+	ca.connectedClientList = tview.NewList()
+	ca.connectedClientList.SetBorder(true).SetTitle("Online Clients")
+
 	logoutBtn := tview.NewButton("Logout")
 	logoutBtn.SetSelectedFunc(func() {
 		ca.Exit()
 		ca.Start()
 	})
+
+	rightFlex.AddItem(refreshBtn, 0, 1, false)
+	rightFlex.AddItem(ca.connectedClientList, 0, 9, false)
 	rightFlex.AddItem(logoutBtn, 0, 1, false)
 	rightFlex.SetBorder(true)
 
@@ -377,11 +387,50 @@ func (ca *ClientApp) navigateToPublicChatRoom() {
 	ca.navigator.AddAndSwitchToPage("ChatPage", flex, true)
 }
 
-// update the message text view with the new incomming message
-func (ca *ClientApp) updateMessageTextView(sender, message string) {
-	currentText := ca.messageView.GetText(false)
-	if currentText != "" {
-		currentText += "\n"
+// update the message text view with the new incoming message
+func (ca *ClientApp) updateMessageList(sender, message string) {
+	var r rune
+	if sender == "You" {
+		r = '>'
+	} else if sender == "Server" {
+		r = 'o'
+	} else {
+		r = '<'
 	}
-	ca.messageView.SetText(fmt.Sprintf("%s%s: %s", currentText, sender, message))
+
+	ca.messageList.AddItem(sender, message, r, func() {
+		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
+			Sender: *ca.username,
+			Target: &sender,
+		})
+
+		ca.alert("You like the comment of " + sender + "!")
+	})
+	ca.app.SetFocus(ca.messageList)
+}
+
+// update the connected clients list
+func (ca *ClientApp) updateOnlineClientsList() {
+	// Create a UserRequest with the current user's username as the sender
+	userRequest := &gs.UserRequest{
+		Sender: *ca.username,
+	}
+
+	// Get the list of connected clients from the server
+	connectedClients, err := ca.stub.GetConnectedPeers(context.Background(), userRequest)
+	if err != nil {
+		ca.alert(fmt.Sprintf("Failed to get connected clients: %v", err))
+		return
+	}
+
+	// Clear the current list and update with the new list
+
+	ca.connectedClientList.Clear()
+
+	// Add each connected client to the list
+	for index, userInfo := range connectedClients.GetUsername() {
+		status := connectedClients.Status[index]
+		ca.connectedClientList.AddItem(userInfo, status, '+', nil)
+	}
+
 }

@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -27,7 +26,6 @@ type ChatServer struct {
 	loggedInAccount       map[string]bool
 	clientStream          map[string]gs.ChatRoom_ChatServer
 	messageLikes          map[string]int
-	serverPassword        string
 	mu                    sync.Mutex
 	pathToUserCredentials string
 	gs.UnimplementedChatRoomServer
@@ -208,10 +206,10 @@ func (cs *ChatServer) broadcast(msg *gs.ChatMessage) {
 }
 
 // handle like command from client
-func (cs *ChatServer) LikeComment(ctx context.Context, command *gs.Command) (*gs.SentMessageStatus, error) {
-	cmd := strings.Split(*command.AdditionalInfo, " ")
-	sender := cmd[0]
-	recipent := cmd[1]
+func (cs *ChatServer) LikeComment(ctx context.Context, command *gs.UserRequest) (*gs.SentMessageStatus, error) {
+	sender := command.GetSender()
+	recipent := command.GetTarget()
+
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -243,9 +241,12 @@ func (cs *ChatServer) SendPrivateMessage(ctx context.Context, msg *gs.PrivateCha
 		return nil, errors.New(fmt.Sprintf("User %s not found!", msg.Recipent))
 	}
 
+	var private int32 = 1
+
 	err := stream.Send(&gs.ChatMessage{
 		Sender:  msg.GetSender(),
 		Message: msg.GetMessage(),
+		Private: &private,
 	})
 
 	if err != nil {
@@ -352,12 +353,14 @@ func (cs *ChatServer) Register(ctx context.Context, user *gs.User) (*gs.Authenti
 }
 
 // retrieve information about a user from connected users list
-func (cs *ChatServer) GetPeerInfomations(ctx context.Context, cmd *gs.Command) (*gs.PublicUserInfo, error) {
-	username := cmd.GetAdditionalInfo()
-	isOnline := cs.isConnected(username)
+func (cs *ChatServer) GetPeerInfomations(ctx context.Context, cmd *gs.UserRequest) (*gs.PublicUserInfo, error) {
+	sender := cmd.GetSender()
+	target := cmd.GetTarget()
+
+	log.Printf("%s requested information about %s\n", sender, target)
 
 	for _, user := range cs.registeredAccount.User {
-		if user.Username == username {
+		if user.Username == target {
 			result := &gs.PublicUserInfo{
 				Username:  user.Username,
 				FullName:  user.FullName,
@@ -366,17 +369,29 @@ func (cs *ChatServer) GetPeerInfomations(ctx context.Context, cmd *gs.Command) (
 				Email:     user.Email,
 			}
 
-			if !isOnline {
-				result.Status = int32(codes.Unknown)
-			} else {
-				result.Status = int32(codes.OK)
-			}
-
 			return result, nil
 		}
 	}
 
-	return nil, errors.New(fmt.Sprintf("User %s not found or offline!", username))
+	return nil, errors.New(fmt.Sprintf("User %s not found or offline!", target))
+}
+
+func (cs *ChatServer) GetConnectedPeers(ctx context.Context, request *gs.UserRequest) (*gs.PublicUserInfoList, error) {
+	sender := request.GetSender()
+	log.Printf("%s requested information about connected users\n", sender)
+
+	result := &gs.PublicUserInfoList{}
+	for _, user := range cs.registeredAccount.User {
+		result.Username = append(result.Username, user.FullName)
+
+		if cs.isConnected(user.Username) {
+			result.Status = append(result.Status, "Online")
+		} else {
+			result.Status = append(result.Status, "Offline")
+		}
+	}
+
+	return result, nil
 }
 
 // ---------------------------------------------------------//
@@ -389,13 +404,12 @@ func GenerateSecureToken(length int) string {
 	return hex.EncodeToString(b)
 }
 
-func NewChatServer(serverPassword, pathToUserCredentials string) *ChatServer {
+func NewChatServer(pathToUserCredentials string) *ChatServer {
 	cs := ChatServer{}
 	cs.clientStream = make(map[string]gs.ChatRoom_ChatServer)
 	cs.loggedInAccount = make(map[string]bool)
 	cs.messageLikes = make(map[string]int)
 	cs.mu = sync.Mutex{}
-	cs.serverPassword = serverPassword
 	cs.pathToUserCredentials = pathToUserCredentials
 	cs.loadUserInformation(cs.pathToUserCredentials)
 

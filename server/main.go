@@ -23,7 +23,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	backendServer := be.NewChatServer(os.Args[1], os.Args[2])
+	backendServer := be.NewChatServer(os.Args[1])
 	grpcService.RegisterChatRoomServer(grpcServer, backendServer)
 
 	defer grpcServer.GracefulStop()
