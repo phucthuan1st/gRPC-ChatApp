@@ -278,7 +278,7 @@ func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*
 		result.Status = int32(codes.AlreadyExists)
 
 		log.Println(msg)
-		return &result, nil
+		return &result, errors.New(msg)
 	}
 
 	// allow user to login with correct username and password
@@ -293,20 +293,25 @@ func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*
 			result.Status = int32(codes.Unauthenticated)
 
 			log.Println(msg)
+			return &result, errors.New(msg)
+		} else {
+			// handle successful login
+			cs.loggedInAccount[in.Username] = true
+			cs.messageLikes[in.Username] = 2
+
+			msg := "Login successfully!!!!"
+			result.Message = &msg
+			result.Status = int32(codes.OK)
+
+			log.Printf("%s was just logged in\n", in.Username)
 			return &result, nil
 		}
 	}
 
-	// handle successful login
-	cs.loggedInAccount[in.Username] = true
-	cs.messageLikes[in.Username] = 2
-
-	msg := "Login successfully!!!!"
-	result.Message = &msg
-	result.Status = int32(codes.OK)
-
-	log.Printf("%s was just logged in\n", in.Username)
-	return &result, nil
+	// other cases
+	msg := fmt.Sprintf("Failed to login as %s: User not found!", in.Username)
+	result.Status = int32(codes.Unauthenticated)
+	return &result, errors.New(msg)
 }
 
 // handle register new account command from client

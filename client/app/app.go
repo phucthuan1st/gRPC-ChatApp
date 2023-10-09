@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	"github.com/rivo/tview"
@@ -22,24 +23,32 @@ type ClientApp struct {
 	messageList         *tview.List
 	connectedClientList *tview.List
 	chatStream          gs.ChatRoom_ChatClient
+	refreshFuncs        []func()
 }
+
+const (
+	refreshInterval = 1000 * time.Millisecond
+	port            = 55555
+	ipaddr          = "localhost"
+)
 
 // Start and run the client application
 func (ca *ClientApp) Start() {
-
-	// backend infomation
-	const port = 55555
-	const ipaddr = "localhost"
-
 	var err error
 
 	serverAddr := fmt.Sprintf("%s:%d", ipaddr, port)
-	ca.serverAddr = &serverAddr
-
-	ca.conn, err = grpc.Dial(*ca.serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ca.conn, err = grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	ca.app = tview.NewApplication()
+	ca.connectedClientList = tview.NewList()
+	ca.messageList = tview.NewList()
 	ca.navigator = tview.NewPages()
+
+	ca.refreshFuncs = append(ca.refreshFuncs, func() {
+		ca.app.Draw()
+	})
+
+	go ca.refresh()
 
 	if err != nil {
 		ca.alert("Cannot connect to server")
@@ -304,7 +313,6 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	// Message view displays the chat room messages from both current user and other users
-	ca.messageList = tview.NewList()
 	ca.messageList.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
 
 	// Input flex contains the input field and the send button
@@ -350,7 +358,6 @@ func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 		ca.updateOnlineClientsList()
 	})
 
-	ca.connectedClientList = tview.NewList()
 	ca.connectedClientList.SetBorder(true).SetTitle("Online Clients")
 
 	logoutBtn := tview.NewButton("Logout")
@@ -384,6 +391,9 @@ func (ca *ClientApp) CreateChatRoom() *tview.Flex {
 // navigate to the public chat room page
 func (ca *ClientApp) navigateToPublicChatRoom() {
 	flex := ca.CreateChatRoom()
+	ca.refreshFuncs = append(ca.refreshFuncs, func() {
+		ca.updateOnlineClientsList()
+	})
 	ca.navigator.AddAndSwitchToPage("ChatPage", flex, true)
 }
 
@@ -424,7 +434,6 @@ func (ca *ClientApp) updateOnlineClientsList() {
 	}
 
 	// Clear the current list and update with the new list
-
 	ca.connectedClientList.Clear()
 
 	// Add each connected client to the list
@@ -433,4 +442,16 @@ func (ca *ClientApp) updateOnlineClientsList() {
 		ca.connectedClientList.AddItem(userInfo, status, '+', nil)
 	}
 
+}
+
+func (ca *ClientApp) refresh() {
+	tick := time.NewTicker(refreshInterval)
+	for {
+		select {
+		case <-tick.C:
+			for _, fun := range ca.refreshFuncs {
+				fun()
+			}
+		}
+	}
 }
