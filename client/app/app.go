@@ -292,14 +292,22 @@ func (ca *ClientApp) createCenterFlexForm(form *tview.Form, long_form bool) *tvi
 
 // Login page navigation
 func (ca *ClientApp) navigateToLogin() {
-	flex := ca.createCenterFlexForm(ca.createLoginForm(), false)
-	ca.navigator.AddAndSwitchToPage("Login", flex, true)
+	if ca.navigator.HasPage("Login") {
+		ca.navigator.SwitchToPage("Login")
+	} else {
+		flex := ca.createCenterFlexForm(ca.createLoginForm(), false)
+		ca.navigator.AddAndSwitchToPage("Login", flex, true)
+	}
 }
 
 // Register page navigation
 func (ca *ClientApp) navigateToRegister() {
-	flex := ca.createCenterFlexForm(ca.createUserRegistrationForm(), true)
-	ca.navigator.AddAndSwitchToPage("Register", flex, true)
+	if ca.navigator.HasPage("Login") {
+		ca.navigator.SwitchToPage("Login")
+	} else {
+		flex := ca.createCenterFlexForm(ca.createUserRegistrationForm(), true)
+		ca.navigator.AddAndSwitchToPage("Register", flex, true)
+	}
 }
 
 // Quit the application
@@ -390,11 +398,15 @@ func (ca *ClientApp) CreateChatRoom() *tview.Flex {
 
 // navigate to the public chat room page
 func (ca *ClientApp) navigateToPublicChatRoom() {
-	flex := ca.CreateChatRoom()
-	ca.refreshFuncs = append(ca.refreshFuncs, func() {
-		ca.updateOnlineClientsList()
-	})
-	ca.navigator.AddAndSwitchToPage("ChatPage", flex, true)
+	if ca.navigator.HasPage("Public Chat Room") {
+		ca.navigator.SwitchToPage("Public Chat Room")
+	} else {
+		flex := ca.CreateChatRoom()
+		ca.refreshFuncs = append(ca.refreshFuncs, func() {
+			ca.updateOnlineClientsList()
+		})
+		ca.navigator.AddAndSwitchToPage("Public Chat Room", flex, true)
+	}
 }
 
 // update the message text view with the new incoming message
@@ -444,6 +456,7 @@ func (ca *ClientApp) updateOnlineClientsList() {
 
 }
 
+// refresh app (including refresh connected clients list)
 func (ca *ClientApp) refresh() {
 	tick := time.NewTicker(refreshInterval)
 	for {
