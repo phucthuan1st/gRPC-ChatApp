@@ -14,21 +14,24 @@ import (
 
 // Client App for gRPC-ChatRoom service usage.
 type ClientApp struct {
-	app                 *tview.Application
-	username            *string
-	serverAddr          *string
-	stub                gs.ChatRoomClient
-	conn                *grpc.ClientConn
+	app      *tview.Application
+	username *string
+
+	conn       *grpc.ClientConn
+	stub       gs.ChatRoomClient
+	chatStream gs.ChatRoom_ChatClient
+
 	navigator           *tview.Pages
 	publicMessageList   *tview.List
-	privateMessageList  map[string]*tview.List
 	connectedClientList *tview.List
-	chatStream          gs.ChatRoom_ChatClient
-	refreshFuncs        []func()
+	privateMessageList  map[string]*tview.List
+
+	stillRunning bool
+	refreshFuncs []func()
 }
 
 const (
-	refreshInterval = 1000 * time.Millisecond
+	refreshInterval = 1750 * time.Millisecond
 	port            = 55555
 	ipaddr          = "localhost"
 )
@@ -49,8 +52,6 @@ func (ca *ClientApp) Start() {
 	ca.refreshFuncs = append(ca.refreshFuncs, func() {
 		ca.app.Draw()
 	})
-
-	go ca.refresh()
 
 	if err != nil {
 		ca.alert("Cannot connect to server")
@@ -165,8 +166,16 @@ func (ca *ClientApp) createLoginForm() *tview.Form {
 					usernameField.SetText("")
 					passwordField.SetText("")
 				} else {
+					ca.stillRunning = true
 					ca.alert("Login successfully!")
 					go ca.startListening()
+
+					go func() {
+						ca.refresh()
+						if !ca.stillRunning {
+							ca.refreshFuncs = []func(){}
+						}
+					}()
 					ca.navigateToPublicChatRoom()
 				}
 			} else {
@@ -318,6 +327,8 @@ func (ca *ClientApp) navigateToRegister() {
 
 // Quit the application
 func (ca *ClientApp) Exit() {
+	ca.stillRunning = false
+	ca.refreshFuncs = []func(){}
 	ca.conn.Close()
 	ca.app.Stop()
 }
@@ -366,11 +377,8 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
-	refreshBtn := tview.NewButton("Refresh")
-	refreshBtn.SetBorder(true)
-	refreshBtn.SetSelectedFunc(func() {
-		ca.updateOnlineClientsList()
-	})
+	interactInput := tview.NewInputField()
+	interactInput.SetBorder(true).SetTitle("Choose a user")
 
 	ca.connectedClientList.SetBorder(true).SetTitle("Online Clients")
 
@@ -380,7 +388,7 @@ func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 		ca.Start()
 	})
 
-	rightFlex.AddItem(refreshBtn, 0, 1, false)
+	rightFlex.AddItem(interactInput, 0, 1, false)
 	rightFlex.AddItem(ca.connectedClientList, 0, 9, false)
 	rightFlex.AddItem(logoutBtn, 0, 1, false)
 	rightFlex.SetBorder(true)
@@ -448,6 +456,10 @@ func (ca *ClientApp) updatePrivateMessageList(sender, target, message string) {
 		r = '<'
 	}
 
+	if _, ok := ca.privateMessageList[target]; !ok {
+		ca.privateMessageList[target] = tview.NewList()
+	}
+
 	ca.privateMessageList[target].AddItem(sender, message, r, func() {
 		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
 			Sender: *ca.username,
@@ -484,7 +496,9 @@ func (ca *ClientApp) updateOnlineClientsList() {
 			ca.connectedClientList.AddItem(username, status, 'x', nil)
 		} else {
 			ca.connectedClientList.AddItem(username, status, '+', func() {
-				ca.navigateToPrivateChatRoom(username)
+				selectedIndex := ca.connectedClientList.GetCurrentItem()
+				target, _ := ca.connectedClientList.GetItemText(selectedIndex)
+				ca.navigateToPrivateChatRoom(target)
 			})
 		}
 	}
@@ -495,7 +509,9 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	// Message view displays the chat room messages from both current user and other users
-	ca.privateMessageList[target] = tview.NewList()
+	if _, ok := ca.privateMessageList[target]; !ok {
+		ca.privateMessageList[target] = tview.NewList()
+	}
 	ca.privateMessageList[target].SetBorder(true).SetTitle(target).SetTitleAlign(tview.AlignRight)
 
 	// Input flex contains the input field and the send button
@@ -559,6 +575,8 @@ func (ca *ClientApp) navigateToPrivateChatRoom(target string) {
 // refresh app (including refresh connected clients list)
 func (ca *ClientApp) refresh() {
 	tick := time.NewTicker(refreshInterval)
+	defer tick.Stop() // Ensure the ticker is stopped when the function exits.
+
 	for {
 		select {
 		case <-tick.C:

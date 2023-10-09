@@ -387,8 +387,11 @@ func (cs *ChatServer) GetConnectedPeers(ctx context.Context, request *gs.UserReq
 
 	result := &gs.PublicUserInfoList{}
 	for _, user := range cs.registeredAccount.User {
-		result.Username = append(result.Username, user.FullName)
+		if user.Username == sender {
+			continue
+		}
 
+		result.Username = append(result.Username, user.Username)
 		if cs.isConnected(user.Username) {
 			result.Status = append(result.Status, "Online")
 		} else {
