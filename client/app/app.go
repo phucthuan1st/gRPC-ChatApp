@@ -20,7 +20,8 @@ type ClientApp struct {
 	stub                gs.ChatRoomClient
 	conn                *grpc.ClientConn
 	navigator           *tview.Pages
-	messageList         *tview.List
+	publicMessageList   *tview.List
+	privateMessageList  map[string]*tview.List
 	connectedClientList *tview.List
 	chatStream          gs.ChatRoom_ChatClient
 	refreshFuncs        []func()
@@ -41,7 +42,8 @@ func (ca *ClientApp) Start() {
 
 	ca.app = tview.NewApplication()
 	ca.connectedClientList = tview.NewList()
-	ca.messageList = tview.NewList()
+	ca.publicMessageList = tview.NewList()
+	ca.privateMessageList = make(map[string]*tview.List)
 	ca.navigator = tview.NewPages()
 
 	ca.refreshFuncs = append(ca.refreshFuncs, func() {
@@ -79,7 +81,11 @@ func (ca *ClientApp) startListening() {
 					ca.alert("Disconnected from server")
 					return
 				} else {
-					ca.updateMessageList(msg.GetSender(), msg.GetMessage())
+					if msg.GetPrivate() > 0 {
+						ca.updatePrivateMessageList(msg.GetSender(), msg.GetSender(), msg.GetMessage())
+					} else {
+						ca.updateMessageList(msg.GetSender(), msg.GetMessage())
+					}
 				}
 			}
 		}()
@@ -321,7 +327,7 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	// Message view displays the chat room messages from both current user and other users
-	ca.messageList.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
+	ca.publicMessageList.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
 
 	// Input flex contains the input field and the send button
 	inputArea := tview.NewTextArea()
@@ -349,7 +355,7 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
 	// Add the message flex and the input flex to the left flex
-	leftFlex.AddItem(ca.messageList, 0, 9, true)
+	leftFlex.AddItem(ca.publicMessageList, 0, 9, true)
 	leftFlex.AddItem(inputFlex, 0, 1, false)
 	leftFlex.SetBorder(true)
 
@@ -420,7 +426,7 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 		r = '<'
 	}
 
-	ca.messageList.AddItem(sender, message, r, func() {
+	ca.publicMessageList.AddItem(sender, message, r, func() {
 		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
 			Sender: *ca.username,
 			Target: &sender,
@@ -428,7 +434,29 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 
 		ca.alert("You like the comment of " + sender + "!")
 	})
-	ca.app.SetFocus(ca.messageList)
+	ca.app.SetFocus(ca.publicMessageList)
+}
+
+// update the message text view with the new incoming message
+func (ca *ClientApp) updatePrivateMessageList(sender, target, message string) {
+	var r rune
+	if sender == "You" {
+		r = '>'
+	} else if sender == "Server" {
+		r = 'o'
+	} else {
+		r = '<'
+	}
+
+	ca.privateMessageList[target].AddItem(sender, message, r, func() {
+		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
+			Sender: *ca.username,
+			Target: &sender,
+		})
+
+		ca.alert("You like the comment of " + sender + "!")
+	})
+	ca.app.SetFocus(ca.privateMessageList[target])
 }
 
 // update the connected clients list
@@ -449,11 +477,83 @@ func (ca *ClientApp) updateOnlineClientsList() {
 	ca.connectedClientList.Clear()
 
 	// Add each connected client to the list
-	for index, userInfo := range connectedClients.GetUsername() {
+	for index, username := range connectedClients.GetUsername() {
 		status := connectedClients.Status[index]
-		ca.connectedClientList.AddItem(userInfo, status, '+', nil)
-	}
 
+		if status == "Offline" {
+			ca.connectedClientList.AddItem(username, status, 'x', nil)
+		} else {
+			ca.connectedClientList.AddItem(username, status, '+', func() {
+				ca.navigateToPrivateChatRoom(username)
+			})
+		}
+	}
+}
+
+// left area of private chat room layout
+func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
+	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
+
+	// Message view displays the chat room messages from both current user and other users
+	ca.privateMessageList[target] = tview.NewList()
+	ca.privateMessageList[target].SetBorder(true).SetTitle(target).SetTitleAlign(tview.AlignRight)
+
+	// Input flex contains the input field and the send button
+	inputArea := tview.NewTextArea()
+	inputArea.SetBorder(true)
+
+	sendBtn := tview.NewButton("Send")
+	sendBtn.SetBorder(true)
+	sendBtn.SetSelectedFunc(func() {
+		message := inputArea.GetText()
+
+		if message != "" {
+			ca.updatePrivateMessageList("You", target, message)
+
+			ca.stub.SendPrivateMessage(context.Background(), &gs.PrivateChatMessage{
+				Sender:   *ca.username,
+				Recipent: target,
+				Message:  message,
+			})
+
+			inputArea.SetText("", true)
+		}
+	})
+
+	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	inputFlex.AddItem(inputArea, 0, 5, true)
+	inputFlex.AddItem(sendBtn, 0, 1, false)
+
+	// Add the message flex and the input flex to the left flex
+	leftFlex.AddItem(ca.privateMessageList[target], 0, 9, true)
+	leftFlex.AddItem(inputFlex, 0, 1, false)
+	leftFlex.SetBorder(true)
+
+	return leftFlex
+}
+
+// create a private chat room page in flex
+func (ca *ClientApp) createPrivateChatRoom(target string) *tview.Flex {
+	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	flex.SetTitle("Private Chat Room")
+
+	leftFlex := ca.createPrivateChatRoomLeftFlex(target)
+	rightFlex := ca.createChatRoomRightFlex()
+
+	flex.AddItem(leftFlex, 0, 3, false)
+	flex.AddItem(rightFlex, 0, 1, false)
+
+	return flex
+}
+
+// navigate to the private chat room
+func (ca *ClientApp) navigateToPrivateChatRoom(target string) {
+	if ca.navigator.HasPage("Private Chat Room " + target) {
+		ca.navigator.SwitchToPage("Private Chat Room" + target)
+	} else {
+		flex := ca.createPrivateChatRoom(target)
+		ca.navigator.AddAndSwitchToPage("Private Chat Room"+target, flex, true)
+	}
 }
 
 // refresh app (including refresh connected clients list)
