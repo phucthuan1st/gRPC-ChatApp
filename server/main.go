@@ -2,20 +2,50 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
 	be "github.com/phucthuan1st/gRPC-ChatRoom/server/backend"
 	"google.golang.org/grpc"
 )
 
-func main() {
-	// https://grpc.io/docs/languages/go/basics/#starting-the-server
-	const port = 55555
+const (
+	port           = 55555
+	connectionType = "tcp"
+	serverAddress  = "localhost"
+)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+func setupLogging(logFile *os.File) {
+
+	// Create a multi-writer to write log messages to both the file and the terminal.
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+
+	// Set the log output to the multi-writer.
+	log.SetOutput(multiWriter)
+
+	// Set log flags as desired (e.g., log date and time).
+	log.SetFlags(log.Ldate | log.Ltime)
+}
+
+func main() {
+	// Generate a log file name based on the current date and time.
+	currentTime := time.Now()
+	logFileName := fmt.Sprintf("server/log/app_%s.log", currentTime.Format("20060102_150405"))
+	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Error opening log file: %v", err)
+	}
+
+	// Set up logging with the generated log file name.
+	setupLogging(logFile)
+	defer logFile.Close()
+
+	// https://grpc.io/docs/languages/go/basics/#starting-the-server
+	listener, err := net.Listen(connectionType, fmt.Sprintf("%s:%d", serverAddress, port))
 
 	if err != nil {
 		log.Fatalf("Cannot start the server: %s", err.Error())

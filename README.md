@@ -2,7 +2,7 @@
 
 - Author: Nguyễn Phúc Thuần
 - Org: FIT@HCMUS
-- CredID: 20120380
+- StudentID: 20120380
 
 ## Overview
 
@@ -14,7 +14,7 @@ The application demonstrates the use of gRPC for communication between a client 
 
 - **Go (Golang):** Go is a statically typed, compiled language known for its performance and simplicity. It serves as the foundation for this project.
 - **gRPC:** gRPC is a high-performance RPC (Remote Procedure Call) framework developed by Google. It is used to establish efficient communication between the client and server.
-- **tview:** It enables the creation of graphical user interfaces for applications, making it easier for users to interact with the chatroom. Powered by ncurses
+- **tview:** It enables the creation of graphical user interfaces for applications, making it easier for users to interact with the chatroom. Powered by rivo terminal framework.
 
 ## Features
 
@@ -49,7 +49,7 @@ git clone https://github.com/phucthuan1st/gRPC-ChatRoom.git
 cd gRPC-ChatRoom
 ```
 
-3. Install dependencies:
+3. Install dependencies (Optional if **vendor** folder included):
 
 ```
 go get -u all
@@ -58,7 +58,7 @@ go get -u all
 4. Start the server:
 
 ```
-go run server/main.go {server_password} {pathToUserCredentials_json}
+go run server/main.go {pathToUserCredentials_json}
 ```
 
 5. Start a client (multiple clients can be run in different terminal windows):
