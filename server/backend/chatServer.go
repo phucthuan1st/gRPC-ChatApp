@@ -219,6 +219,10 @@ func (cs *ChatServer) LikeComment(ctx context.Context, command *gs.UserRequest) 
 	id := fmt.Sprintf("%d-%s", timestamp, sender)
 
 	log.Printf("User %s just liked comment of %s\n", sender, recipent)
+	cs.broadcast(&gs.ChatMessage{
+		Message: fmt.Sprintf("%s just liked comment of %s", sender, recipent),
+		Sender:  "Server",
+	})
 
 	return &gs.SentMessageStatus{
 		Id:        id,
@@ -383,7 +387,7 @@ func (cs *ChatServer) GetPeerInfomations(ctx context.Context, cmd *gs.UserReques
 
 func (cs *ChatServer) GetConnectedPeers(ctx context.Context, request *gs.UserRequest) (*gs.PublicUserInfoList, error) {
 	sender := request.GetSender()
-	log.Printf("%s requested information about connected users\n", sender)
+	log.Printf("%s requested connected users list\n", sender)
 
 	result := &gs.PublicUserInfoList{}
 	for _, user := range cs.registeredAccount.User {

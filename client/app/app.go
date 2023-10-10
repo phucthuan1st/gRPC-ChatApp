@@ -31,7 +31,7 @@ type ClientApp struct {
 }
 
 const (
-	refreshInterval = 1750 * time.Millisecond
+	refreshInterval = 1500 * time.Millisecond
 	port            = 55555
 	ipaddr          = "localhost"
 )
@@ -377,8 +377,11 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 	rightFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
-	interactInput := tview.NewInputField()
-	interactInput.SetBorder(true).SetTitle("Choose a user")
+	quitBtn := tview.NewButton("Quit")
+	quitBtn.SetBorder(true)
+	quitBtn.SetSelectedFunc(func() {
+		ca.Exit()
+	})
 
 	ca.connectedClientList.SetBorder(true).SetTitle("Online Clients")
 
@@ -388,7 +391,7 @@ func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 		ca.Start()
 	})
 
-	rightFlex.AddItem(interactInput, 0, 1, false)
+	rightFlex.AddItem(quitBtn, 0, 1, false)
 	rightFlex.AddItem(ca.connectedClientList, 0, 9, false)
 	rightFlex.AddItem(logoutBtn, 0, 1, false)
 	rightFlex.SetBorder(true)
@@ -434,14 +437,20 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 		r = '<'
 	}
 
-	ca.publicMessageList.AddItem(sender, message, r, func() {
+	likeHandler := func() {
 		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
 			Sender: *ca.username,
 			Target: &sender,
 		})
 
 		ca.alert("You like the comment of " + sender + "!")
-	})
+	}
+
+	if sender == "You" {
+		likeHandler = func() {}
+	}
+
+	ca.publicMessageList.AddItem(sender, message, r, likeHandler)
 	ca.app.SetFocus(ca.publicMessageList)
 }
 
@@ -498,23 +507,46 @@ func (ca *ClientApp) updateOnlineClientsList() {
 			ca.connectedClientList.AddItem(username, status, '+', func() {
 				selectedIndex := ca.connectedClientList.GetCurrentItem()
 				target, _ := ca.connectedClientList.GetItemText(selectedIndex)
-				ca.navigateToPrivateChatRoom(target)
+
+				if connectedClients.Status[selectedIndex] == "Online" {
+					ca.navigateToPrivateChatRoom(target)
+				}
 			})
 		}
 	}
+}
+
+func (ca *ClientApp) createUserProfieView(target string) *tview.TextView {
+	userProfView := tview.NewTextView()
+	userProfView.SetBorder(true).SetTitle("Profile")
+	userProfView.SetTitleAlign(tview.AlignRight)
+
+	profile, err := ca.stub.GetPeerInfomations(context.Background(), &gs.UserRequest{
+		Target: &target,
+		Sender: *ca.username,
+	})
+
+	if err != nil {
+		ca.alert(fmt.Sprintf("Failed to get user information: %v", err))
+		return nil
+	}
+	profileString := fmt.Sprintf("Full Name: %s\nUsername: %s\nEmail: %s\nBirthday: %s\nAddress: %v", profile.GetFullName(), profile.GetUsername(), profile.GetEmail(), profile.GetBirthdate(), profile.GetAddress())
+	userProfView.SetText(profileString)
+
+	return userProfView
 }
 
 // left area of private chat room layout
 func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 	leftFlex := tview.NewFlex().SetDirection(tview.FlexRow)
 
-	// Message view displays the chat room messages from both current user and other users
+	// COMPONENT: Message view displays the chat room messages from both current user and other users
 	if _, ok := ca.privateMessageList[target]; !ok {
 		ca.privateMessageList[target] = tview.NewList()
 	}
 	ca.privateMessageList[target].SetBorder(true).SetTitle(target).SetTitleAlign(tview.AlignRight)
 
-	// Input flex contains the input field and the send button
+	// COMPONENT: Input flex contains the input field and the send button
 	inputArea := tview.NewTextArea()
 	inputArea.SetBorder(true)
 
@@ -540,10 +572,53 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 	inputFlex.AddItem(inputArea, 0, 5, true)
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
-	// Add the message flex and the input flex to the left flex
+	// COMPONENT: tabbed flex
+	tabbedFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
+
+	msgTabBtn := tview.NewButton("Messages")
+	msgTabBtn.SetBorder(true)
+	msgTabBtn.SetDisabled(true)
+
+	profTabBtn := tview.NewButton("Profile")
+	profTabBtn.SetBorder(true)
+
+	returnTabBtn := tview.NewButton("Chat Room")
+	returnTabBtn.SetBorder(true)
+	returnTabBtn.SetSelectedFunc(func() {
+		ca.navigateToPublicChatRoom()
+	})
+
+	spacer := ca.createSpacer()
+	tabbedFlex.AddItem(msgTabBtn, 0, 1, false)
+	tabbedFlex.AddItem(profTabBtn, 0, 1, false)
+	tabbedFlex.AddItem(spacer, 0, 2, false)
+	tabbedFlex.AddItem(returnTabBtn, 0, 2, false)
+
+	// FINAL: Add the message flex and the input flex to the left flex
+	leftFlex.AddItem(tabbedFlex, 0, 1, false)
 	leftFlex.AddItem(ca.privateMessageList[target], 0, 9, true)
 	leftFlex.AddItem(inputFlex, 0, 1, false)
 	leftFlex.SetBorder(true)
+
+	profTabBtn.SetSelectedFunc(func() {
+		msgTabBtn.SetDisabled(false)
+		profTabBtn.SetDisabled(true)
+		leftFlex.Clear()
+
+		userProfView := ca.createUserProfieView(target)
+		leftFlex.AddItem(tabbedFlex, 0, 1, false)
+		leftFlex.AddItem(userProfView, 0, 10, true)
+	})
+
+	msgTabBtn.SetSelectedFunc(func() {
+		msgTabBtn.SetDisabled(true)
+		profTabBtn.SetDisabled(false)
+		leftFlex.Clear()
+
+		leftFlex.AddItem(tabbedFlex, 0, 1, false)
+		leftFlex.AddItem(ca.privateMessageList[target], 0, 9, true)
+		leftFlex.AddItem(inputFlex, 0, 1, false)
+	})
 
 	return leftFlex
 }
