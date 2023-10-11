@@ -424,7 +424,12 @@ func (cs *ChatServer) GetPeerInfomations(ctx context.Context, cmd *gs.UserReques
 
 func (cs *ChatServer) GetConnectedPeers(ctx context.Context, request *gs.UserRequest) (*gs.PublicUserInfoList, error) {
 	sender := request.GetSender()
-	log.Printf("%s requested connected users list\n", sender)
+
+	// NOTE: consider log here because of heavy logging
+	/*--*/
+	// log.Printf("%s requested connected users list\n", sender)
+	/*--*/
+	// --------------------------------------------------//
 
 	result := &gs.PublicUserInfoList{}
 	for _, user := range cs.registeredAccount.User {

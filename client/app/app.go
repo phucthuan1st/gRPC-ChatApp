@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	gs "github.com/phucthuan1st/gRPC-ChatRoom/grpcService"
@@ -14,24 +15,22 @@ import (
 
 // Client App for gRPC-ChatRoom service usage.
 type ClientApp struct {
-	app      *tview.Application
-	username *string
-
-	conn       *grpc.ClientConn
-	stub       gs.ChatRoomClient
-	chatStream gs.ChatRoom_ChatClient
-
+	app                 *tview.Application
+	username            *string
+	conn                *grpc.ClientConn
+	stub                gs.ChatRoomClient
+	chatStream          gs.ChatRoom_ChatClient
 	navigator           *tview.Pages
 	publicMessageList   *tview.List
-	connectedClientList *tview.List
 	privateMessageList  map[string]*tview.List
-
-	stillRunning bool
-	refreshFuncs []func()
+	connectedClientList *tview.List
+	selectedIndex       int
+	stillRunning        bool
+	refreshFuncs        []func()
 }
 
 const (
-	refreshInterval = 1500 * time.Millisecond
+	refreshInterval = 500 * time.Millisecond
 	port            = 55555
 	ipaddr          = "localhost"
 )
@@ -426,6 +425,12 @@ func (ca *ClientApp) navigateToPublicChatRoom() {
 	} else {
 		flex := ca.CreateChatRoom()
 		ca.refreshFuncs = append(ca.refreshFuncs, func() {
+			mu := sync.Mutex{}
+
+			mu.Lock()
+			ca.selectedIndex = ca.connectedClientList.GetCurrentItem()
+			mu.Unlock()
+
 			ca.updateOnlineClientsList()
 		})
 		ca.navigator.AddAndSwitchToPage("Public Chat Room", flex, true)
@@ -502,15 +507,19 @@ func (ca *ClientApp) updateOnlineClientsList() {
 		if status == "Offline" {
 			ca.connectedClientList.AddItem(username, status, 'x', nil)
 		} else {
-			ca.connectedClientList.AddItem(username, status, '+', func() {
-				selectedIndex := ca.connectedClientList.GetCurrentItem()
-				target, _ := ca.connectedClientList.GetItemText(selectedIndex)
-
-				if connectedClients.Status[selectedIndex] == "Online" {
-					ca.navigateToPrivateChatRoom(target)
-				}
-			})
+			ca.connectedClientList.AddItem(username, status, '+', ca.startAPrivateSession)
 		}
+	}
+
+	ca.connectedClientList.SetCurrentItem(ca.selectedIndex)
+	ca.app.SetFocus(ca.connectedClientList)
+}
+
+func (ca *ClientApp) startAPrivateSession() {
+	target, status := ca.connectedClientList.GetItemText(ca.selectedIndex)
+
+	if status != "Offline" {
+		ca.navigateToPrivateChatRoom(target)
 	}
 }
 
