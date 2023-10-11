@@ -459,7 +459,10 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 		likeHandler = func() {}
 	}
 
-	ca.publicMessageList.AddItem(sender, message, r, likeHandler)
+	ca.publicMessageList.AddItem(sender, message, r, func() {
+		likeHandler()
+		likeHandler = func() {}
+	})
 	ca.app.SetFocus(ca.publicMessageList)
 }
 
@@ -649,10 +652,10 @@ func (ca *ClientApp) createPrivateChatRoom(target string) *tview.Flex {
 // navigate to the private chat room
 func (ca *ClientApp) navigateToPrivateChatRoom(target string) {
 	if ca.navigator.HasPage("Private Chat Room " + target) {
-		ca.navigator.SwitchToPage("Private Chat Room" + target)
+		ca.navigator.SwitchToPage("Private Chat Room " + target)
 	} else {
 		flex := ca.createPrivateChatRoom(target)
-		ca.navigator.AddAndSwitchToPage("Private Chat Room"+target, flex, true)
+		ca.navigator.AddAndSwitchToPage("Private Chat Room "+target, flex, true)
 	}
 }
 

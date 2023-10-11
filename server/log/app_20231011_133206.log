@@ -1,0 +1,28 @@
+2023/10/11 13:32:06 Starting gRPC server on localhost:55555...
+2023/10/11 13:32:21 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
+2023/10/11 13:32:21 alice_johnson was just logged in
+2023/10/11 13:32:21 User alice_johnson request to join the chat room!
+2023/10/11 13:32:21 User alice_johnson is allowed to join the chat room!
+2023/10/11 13:32:22 alice_johnson requested connected users list
+2023/10/11 13:32:24 alice_johnson requested connected users list
+2023/10/11 13:32:25 alice_johnson requested connected users list
+2023/10/11 13:32:27 alice_johnson requested connected users list
+2023/10/11 13:32:28 alice_johnson requested connected users list
+2023/10/11 13:32:30 alice_johnson requested connected users list
+2023/10/11 13:32:31 alice_johnson requested connected users list
+2023/10/11 13:32:33 alice_johnson requested connected users list
+2023/10/11 13:32:34 alice_johnson requested connected users list
+2023/10/11 13:32:36 alice_johnson requested connected users list
+2023/10/11 13:32:37 alice_johnson requested connected users list
+2023/10/11 13:32:38 Login request from bob_greenwood: /VMVjx9V2g2tzyDvc0KEb7WwK+Y=
+2023/10/11 13:32:38 bob_greenwood was just logged in
+2023/10/11 13:32:38 User bob_greenwood request to join the chat room!
+2023/10/11 13:32:38 User bob_greenwood is allowed to join the chat room!
+2023/10/11 13:32:39 alice_johnson requested connected users list
+2023/10/11 13:32:39 bob_greenwood requested connected users list
+2023/10/11 13:32:40 alice_johnson requested connected users list
+2023/10/11 13:32:41 bob_greenwood requested connected users list
+2023/10/11 13:32:42 alice_johnson requested connected users list
+2023/10/11 13:32:42 bob_greenwood requested connected users list
+2023/10/11 13:32:43 Client disconnected: alice_johnson!
+2023/10/11 13:32:44 Client disconnected: bob_greenwood!

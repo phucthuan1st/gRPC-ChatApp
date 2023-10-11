@@ -1,0 +1,62 @@
+2023/10/11 13:28:08 Starting gRPC server on localhost:55555...
+2023/10/11 13:28:19 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
+2023/10/11 13:28:19 alice_johnson was just logged in
+2023/10/11 13:28:19 User alice_johnson request to join the chat room!
+2023/10/11 13:28:19 User alice_johnson is allowed to join the chat room!
+2023/10/11 13:28:21 alice_johnson requested connected users list
+2023/10/11 13:28:22 alice_johnson requested connected users list
+2023/10/11 13:28:24 alice_johnson requested connected users list
+2023/10/11 13:28:25 alice_johnson requested connected users list
+2023/10/11 13:28:27 alice_johnson requested connected users list
+2023/10/11 13:28:28 alice_johnson requested connected users list
+2023/10/11 13:28:30 alice_johnson requested connected users list
+2023/10/11 13:28:30 Login request from bob_greenwood: /VMVjx9V2g2tzyDvc0KEb7WwK+Y=
+2023/10/11 13:28:30 bob_greenwood was just logged in
+2023/10/11 13:28:30 User bob_greenwood request to join the chat room!
+2023/10/11 13:28:30 User bob_greenwood is allowed to join the chat room!
+2023/10/11 13:28:31 alice_johnson requested connected users list
+2023/10/11 13:28:32 bob_greenwood requested connected users list
+2023/10/11 13:28:33 alice_johnson requested connected users list
+2023/10/11 13:28:33 bob_greenwood requested connected users list
+2023/10/11 13:28:34 alice_johnson requested connected users list
+2023/10/11 13:28:35 Room chat request from alice_johnson: hello bob
+2023/10/11 13:28:35 bob_greenwood requested connected users list
+2023/10/11 13:28:36 alice_johnson requested connected users list
+2023/10/11 13:28:36 bob_greenwood requested connected users list
+2023/10/11 13:28:37 alice_johnson requested connected users list
+2023/10/11 13:28:38 bob_greenwood requested connected users list
+2023/10/11 13:28:39 Room chat request from bob_greenwood: hello alice
+2023/10/11 13:28:39 alice_johnson requested connected users list
+2023/10/11 13:28:39 bob_greenwood requested connected users list
+2023/10/11 13:28:40 User bob_greenwood just liked Message of alice_johnson
+2023/10/11 13:28:40 alice_johnson requested connected users list
+2023/10/11 13:28:41 bob_greenwood requested connected users list
+2023/10/11 13:28:42 alice_johnson requested connected users list
+2023/10/11 13:28:42 bob_greenwood requested connected users list
+2023/10/11 13:28:43 alice_johnson requested connected users list
+2023/10/11 13:28:44 bob_greenwood requested connected users list
+2023/10/11 13:28:45 alice_johnson requested connected users list
+2023/10/11 13:28:45 bob_greenwood requested connected users list
+2023/10/11 13:28:46 alice_johnson requested connected users list
+2023/10/11 13:28:47 bob_greenwood requested connected users list
+2023/10/11 13:28:47 User alice_johnson just liked Message of bob_greenwood
+2023/10/11 13:28:48 alice_johnson requested connected users list
+2023/10/11 13:28:48 bob_greenwood requested connected users list
+2023/10/11 13:28:49 alice_johnson requested connected users list
+2023/10/11 13:28:50 bob_greenwood requested connected users list
+2023/10/11 13:28:51 alice_johnson requested connected users list
+2023/10/11 13:28:51 bob_greenwood requested connected users list
+2023/10/11 13:28:52 alice_johnson requested connected users list
+2023/10/11 13:28:53 bob_greenwood requested connected users list
+2023/10/11 13:28:54 alice_johnson requested connected users list
+2023/10/11 13:28:54 bob_greenwood requested connected users list
+2023/10/11 13:28:55 alice_johnson requested connected users list
+2023/10/11 13:28:56 bob_greenwood requested connected users list
+2023/10/11 13:28:57 alice_johnson requested connected users list
+2023/10/11 13:28:57 bob_greenwood requested connected users list
+2023/10/11 13:28:58 alice_johnson requested connected users list
+2023/10/11 13:28:59 bob_greenwood requested connected users list
+2023/10/11 13:29:00 alice_johnson requested connected users list
+2023/10/11 13:29:00 bob_greenwood requested connected users list
+2023/10/11 13:29:01 alice_johnson requested connected users list
+2023/10/11 13:29:02 bob_greenwood requested connected users list

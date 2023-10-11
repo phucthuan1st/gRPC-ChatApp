@@ -207,9 +207,13 @@ func (cs *ChatServer) broadcast(msg *gs.ChatMessage) {
 			}
 		}
 	}
-	messageLike, _ := cs.messageLikes[msg.GetSender()]
-	messageLike.nLike = 0
-	messageLike.whoLike = make(map[string]bool)
+
+	if msg.GetSender() != "Server" {
+		cs.messageLikes[msg.GetSender()] = MessageLikes{
+			nLike:   0,
+			whoLike: make(map[string]bool),
+		}
+	}
 }
 
 // handle like command from client
@@ -332,11 +336,15 @@ func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*
 				whoLike: make(map[string]bool),
 			}
 
-			msg := "Login successfully!!!!"
+			msg := fmt.Sprintf("User %s has logged in successfully!", in.Username)
 			result.Message = &msg
 			result.Status = int32(codes.OK)
 
-			log.Printf("%s was just logged in\n", in.Username)
+			log.Println(msg)
+			cs.broadcast(&gs.ChatMessage{
+				Message: msg,
+				Sender:  "Server",
+			})
 			return &result, nil
 		}
 	}
