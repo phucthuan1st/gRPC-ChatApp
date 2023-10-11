@@ -24,13 +24,14 @@ type ClientApp struct {
 	publicMessageList   *tview.List
 	privateMessageList  map[string]*tview.List
 	connectedClientList *tview.List
+	inputArea           *tview.TextArea
 	selectedIndex       int
 	stillRunning        bool
 	refreshFuncs        []func()
 }
 
 const (
-	refreshInterval = 500 * time.Millisecond
+	refreshInterval = 250 * time.Millisecond
 	port            = 55555
 	ipaddr          = "localhost"
 )
@@ -346,13 +347,13 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	ca.publicMessageList.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
 
 	// Input flex contains the input field and the send button
-	inputArea := tview.NewTextArea()
-	inputArea.SetBorder(true)
+	ca.inputArea = tview.NewTextArea()
+	ca.inputArea.SetBorder(true)
 
 	sendBtn := tview.NewButton("Send")
 	sendBtn.SetBorder(true)
 	sendBtn.SetSelectedFunc(func() {
-		message := inputArea.GetText()
+		message := ca.inputArea.GetText()
 
 		if message != "" {
 			ca.updateMessageList("You", message)
@@ -362,12 +363,12 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 				Message: message,
 			})
 
-			inputArea.SetText("", true)
+			ca.inputArea.SetText("", true)
 		}
 	})
 
 	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	inputFlex.AddItem(inputArea, 0, 5, true)
+	inputFlex.AddItem(ca.inputArea, 0, 5, true)
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
 	// Add the message flex and the input flex to the left flex
@@ -391,6 +392,7 @@ func (ca *ClientApp) createChatRoomRightFlex() *tview.Flex {
 	ca.connectedClientList.SetBorder(true).SetTitle("Online Clients")
 
 	logoutBtn := tview.NewButton("Logout")
+	logoutBtn.SetBorder(true)
 	logoutBtn.SetSelectedFunc(func() {
 		ca.Exit()
 		ca.Start()
@@ -510,9 +512,11 @@ func (ca *ClientApp) updateOnlineClientsList() {
 			ca.connectedClientList.AddItem(username, status, '+', ca.startAPrivateSession)
 		}
 	}
-
 	ca.connectedClientList.SetCurrentItem(ca.selectedIndex)
-	ca.app.SetFocus(ca.connectedClientList)
+
+	if ca.app.GetFocus() != ca.inputArea {
+		ca.app.SetFocus(ca.connectedClientList)
+	}
 }
 
 func (ca *ClientApp) startAPrivateSession() {
@@ -554,13 +558,13 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 	ca.privateMessageList[target].SetBorder(true).SetTitle(target).SetTitleAlign(tview.AlignRight)
 
 	// COMPONENT: Input flex contains the input field and the send button
-	inputArea := tview.NewTextArea()
-	inputArea.SetBorder(true)
+	ca.inputArea = tview.NewTextArea()
+	ca.inputArea.SetBorder(true)
 
 	sendBtn := tview.NewButton("Send")
 	sendBtn.SetBorder(true)
 	sendBtn.SetSelectedFunc(func() {
-		message := inputArea.GetText()
+		message := ca.inputArea.GetText()
 
 		if message != "" {
 			ca.updatePrivateMessageList("You", target, message)
@@ -571,12 +575,12 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 				Message:  message,
 			})
 
-			inputArea.SetText("", true)
+			ca.inputArea.SetText("", true)
 		}
 	})
 
 	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	inputFlex.AddItem(inputArea, 0, 5, true)
+	inputFlex.AddItem(ca.inputArea, 0, 5, true)
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
 	// COMPONENT: tabbed flex

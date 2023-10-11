@@ -1,0 +1,37 @@
+2023/10/11 17:35:56 Starting gRPC server on localhost:55555...
+2023/10/11 17:36:20 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
+2023/10/11 17:36:20 User alice_johnson has logged in successfully!
+2023/10/11 17:36:20 User alice_johnson request to join the chat room!
+2023/10/11 17:36:20 User alice_johnson is allowed to join the chat room!
+2023/10/11 17:36:31 Login request from grace_jones: 0Q4TMB/G5RdeDX3SmM9GZeTX480=
+2023/10/11 17:36:31 User grace_jones has logged in successfully!
+2023/10/11 17:36:31 User grace_jones request to join the chat room!
+2023/10/11 17:36:31 User grace_jones is allowed to join the chat room!
+2023/10/11 17:36:57 Login request from carol_martin: xZbSohccKen21m9YmFwdtm2fj7Q=
+2023/10/11 17:36:57 User carol_martin has logged in successfully!
+2023/10/11 17:36:57 User carol_martin request to join the chat room!
+2023/10/11 17:36:57 User carol_martin is allowed to join the chat room!
+2023/10/11 17:37:43 Client disconnected: grace_jones!
+2023/10/11 17:37:44 Client disconnected: carol_martin!
+2023/10/11 17:37:46 Client disconnected: alice_johnson!
+2023/10/11 17:38:40 Login request from grace_jones: WyP+m2zFZvZPfrdQZfDGkjqBgJ8=
+2023/10/11 17:38:40 User grace_jones has logged in successfully!
+2023/10/11 17:38:40 User grace_jones request to join the chat room!
+2023/10/11 17:38:40 User grace_jones is allowed to join the chat room!
+2023/10/11 17:38:53 Login request from bob_greenwood: Uo/A6W4rcu1YbzQIYFMUA/b3gno=
+2023/10/11 17:38:53 User bob_greenwood has logged in successfully!
+2023/10/11 17:38:53 User bob_greenwood request to join the chat room!
+2023/10/11 17:38:53 User bob_greenwood is allowed to join the chat room!
+2023/10/11 17:39:23 Login request from davis_smith: YiJoEmsXN+DW2NAxFDOuUQTlzk4=
+2023/10/11 17:39:34 Login request from david_smith: ph5t0JyJVO/h/srHv2KxJmVzZDc=
+2023/10/11 17:39:34 User david_smith has logged in successfully!
+2023/10/11 17:39:34 User david_smith request to join the chat room!
+2023/10/11 17:39:34 User david_smith is allowed to join the chat room!
+2023/10/11 17:40:07 Login request from jacob_turner: C9y13YnyG8avNnHR6OoddYH7fqk=
+2023/10/11 17:40:07 User jacob_turner has logged in successfully!
+2023/10/11 17:40:07 User jacob_turner request to join the chat room!
+2023/10/11 17:40:07 User jacob_turner is allowed to join the chat room!
+2023/10/11 17:41:51 Client disconnected: grace_jones!
+2023/10/11 17:41:52 Client disconnected: jacob_turner!
+2023/10/11 17:41:54 Client disconnected: david_smith!
+2023/10/11 17:41:56 Client disconnected: bob_greenwood!
