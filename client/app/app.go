@@ -54,7 +54,8 @@ func (ca *ClientApp) Start() {
 	})
 
 	if err != nil {
-		ca.alert("Cannot connect to server")
+		ca.alert("Cannot connect to server", "")
+		ca.Exit()
 	} else {
 		ca.stub = gs.NewChatRoomClient(ca.conn)
 	}
@@ -66,7 +67,7 @@ func (ca *ClientApp) Start() {
 func (ca *ClientApp) startListening() {
 	stream, err := ca.stub.Chat(context.Background())
 	if err != nil {
-		ca.alert("Cannot connect to server")
+		ca.alert("Cannot connect to server", "")
 	} else {
 		ca.chatStream = stream
 
@@ -79,7 +80,8 @@ func (ca *ClientApp) startListening() {
 			for {
 				msg, err := ca.chatStream.Recv()
 				if err != nil {
-					ca.alert("Disconnected from server")
+					ca.Exit()
+					ca.alert("Disconnected from server", "Login")
 					return
 				} else {
 					if msg.GetPrivate() > 0 {
@@ -102,7 +104,7 @@ func (ca *ClientApp) requestLogin(password string) bool {
 
 	result, err := ca.stub.Login(context.Background(), &cred)
 	if err != nil {
-		ca.alert("Failed to request authentication from server. Please try again")
+		ca.alert("Failed to request authentication from server. Please try again", "Login")
 		return false
 	}
 
@@ -117,7 +119,7 @@ func (ca *ClientApp) requestLogin(password string) bool {
 		}
 	}
 
-	ca.alert("Unexpected error")
+	ca.alert("Unexpected error", "Login")
 	return false
 }
 
@@ -133,7 +135,7 @@ func (ca *ClientApp) modal(p tview.Primitive, width, height int) tview.Primitive
 }
 
 // Alert a message to the center of the screen
-func (ca *ClientApp) alert(msg string) {
+func (ca *ClientApp) alert(msg string, parentPage string) {
 
 	modal := tview.NewModal().SetText(msg).AddButtons([]string{"Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
@@ -143,6 +145,10 @@ func (ca *ClientApp) alert(msg string) {
 		})
 
 	ca.navigator.AddAndSwitchToPage("Alert", ca.modal(modal, 40, 20), false)
+
+	if parentPage != "" {
+		ca.navigator.SwitchToPage(parentPage)
+	}
 }
 
 // a standart login form
@@ -167,7 +173,7 @@ func (ca *ClientApp) createLoginForm() *tview.Form {
 					passwordField.SetText("")
 				} else {
 					ca.stillRunning = true
-					ca.alert("Login successfully!")
+					ca.alert("Login successfully!", "")
 					go ca.startListening()
 
 					go func() {
@@ -180,7 +186,7 @@ func (ca *ClientApp) createLoginForm() *tview.Form {
 				}
 			} else {
 				msg := "Cannot access the input. Please try again later."
-				ca.alert(msg)
+				ca.alert(msg, "Login")
 			}
 		}).
 		AddButton("Move to Register", func() {
@@ -248,9 +254,9 @@ func (ca *ClientApp) createUserRegistrationForm() *tview.Form {
 			// Handle the user registration logic with the created user message
 			result, err := ca.stub.Register(context.Background(), user)
 			if err != nil {
-				ca.alert(err.Error())
+				ca.alert(err.Error(), "Register")
 			} else {
-				ca.alert(fmt.Sprintf("User %s registered successfully with code %d!", result.GetUsername(), result.GetStatus()))
+				ca.alert(fmt.Sprintf("User %s registered successfully with code %d!", result.GetUsername(), result.GetStatus()), "")
 				ca.navigateToLogin()
 			}
 		}).
@@ -442,27 +448,14 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 			return
 		}
 
-		_, err := ca.stub.LikeMessage(context.Background(), &gs.UserRequest{
+		ca.stub.LikeMessage(context.Background(), &gs.UserRequest{
 			Sender: *ca.username,
 			Target: &sender,
 		})
 
-		if err != nil {
-			ca.alert(fmt.Sprintf("%s", err.Error()))
-		} else {
-			ca.alert("You like the comment of " + sender + "!")
-		}
-
 	}
 
-	if sender == "You" {
-		likeHandler = func() {}
-	}
-
-	ca.publicMessageList.AddItem(sender, message, r, func() {
-		likeHandler()
-		likeHandler = func() {}
-	})
+	ca.publicMessageList.AddItem(sender, message, r, likeHandler)
 	ca.app.SetFocus(ca.publicMessageList)
 }
 
@@ -481,14 +474,7 @@ func (ca *ClientApp) updatePrivateMessageList(sender, target, message string) {
 		ca.privateMessageList[target] = tview.NewList()
 	}
 
-	ca.privateMessageList[target].AddItem(sender, message, r, func() {
-		ca.stub.LikeMessage(context.Background(), &gs.UserRequest{
-			Sender: *ca.username,
-			Target: &sender,
-		})
-
-		ca.alert("You like the comment of " + sender + "!")
-	})
+	ca.privateMessageList[target].AddItem(sender, message, r, nil)
 	ca.app.SetFocus(ca.privateMessageList[target])
 }
 
@@ -502,7 +488,7 @@ func (ca *ClientApp) updateOnlineClientsList() {
 	// Get the list of connected clients from the server
 	connectedClients, err := ca.stub.GetConnectedPeers(context.Background(), userRequest)
 	if err != nil {
-		ca.alert(fmt.Sprintf("Failed to get connected clients: %v", err))
+		ca.alert(fmt.Sprintf("Failed to get connected clients: %v", err), "")
 		return
 	}
 
@@ -539,7 +525,7 @@ func (ca *ClientApp) createUserProfieView(target string) *tview.TextView {
 	})
 
 	if err != nil {
-		ca.alert(fmt.Sprintf("Failed to get user information: %v", err))
+		ca.alert(fmt.Sprintf("Failed to get user information: %v", err), "")
 		return nil
 	}
 	profileString := fmt.Sprintf("Full Name: %s\nUsername: %s\nEmail: %s\nBirthday: %s\nAddress: %v", profile.GetFullName(), profile.GetUsername(), profile.GetEmail(), profile.GetBirthdate(), profile.GetAddress())
