@@ -87,7 +87,7 @@ service ChatRoom {
   rpc Register(User) returns (AuthenticationResult);
 
   // like a user's message, default to their last message
-  rpc LikeComment(UserRequest) returns (SentMessageStatus);
+  rpc LikeMessage(UserRequest) returns (SentMessageStatus);
 
   // login using a pair of username and password
   rpc Login(UserLoginCredentials) returns (AuthenticationResult);

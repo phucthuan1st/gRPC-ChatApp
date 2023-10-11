@@ -29,7 +29,7 @@ type ChatRoomClient interface {
 	// Register for a new client account
 	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*AuthenticationResult, error)
 	// like a user's message, default to their last message
-	LikeComment(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*SentMessageStatus, error)
+	LikeMessage(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*SentMessageStatus, error)
 	// login using a pair of username and password
 	Login(ctx context.Context, in *UserLoginCredentials, opts ...grpc.CallOption) (*AuthenticationResult, error)
 	// Get a list of information of connected peers or specific peers
@@ -95,9 +95,9 @@ func (c *chatRoomClient) Register(ctx context.Context, in *User, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *chatRoomClient) LikeComment(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*SentMessageStatus, error) {
+func (c *chatRoomClient) LikeMessage(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*SentMessageStatus, error) {
 	out := new(SentMessageStatus)
-	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/LikeComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/grpcService.ChatRoom/LikeMessage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ type ChatRoomServer interface {
 	// Register for a new client account
 	Register(context.Context, *User) (*AuthenticationResult, error)
 	// like a user's message, default to their last message
-	LikeComment(context.Context, *UserRequest) (*SentMessageStatus, error)
+	LikeMessage(context.Context, *UserRequest) (*SentMessageStatus, error)
 	// login using a pair of username and password
 	Login(context.Context, *UserLoginCredentials) (*AuthenticationResult, error)
 	// Get a list of information of connected peers or specific peers
@@ -165,8 +165,8 @@ func (UnimplementedChatRoomServer) SendPrivateMessage(context.Context, *PrivateC
 func (UnimplementedChatRoomServer) Register(context.Context, *User) (*AuthenticationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedChatRoomServer) LikeComment(context.Context, *UserRequest) (*SentMessageStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LikeComment not implemented")
+func (UnimplementedChatRoomServer) LikeMessage(context.Context, *UserRequest) (*SentMessageStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LikeMessage not implemented")
 }
 func (UnimplementedChatRoomServer) Login(context.Context, *UserLoginCredentials) (*AuthenticationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
@@ -252,20 +252,20 @@ func _ChatRoom_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatRoom_LikeComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatRoom_LikeMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatRoomServer).LikeComment(ctx, in)
+		return srv.(ChatRoomServer).LikeMessage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpcService.ChatRoom/LikeComment",
+		FullMethod: "/grpcService.ChatRoom/LikeMessage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatRoomServer).LikeComment(ctx, req.(*UserRequest))
+		return srv.(ChatRoomServer).LikeMessage(ctx, req.(*UserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -340,8 +340,8 @@ var ChatRoom_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ChatRoom_Register_Handler,
 		},
 		{
-			MethodName: "LikeComment",
-			Handler:    _ChatRoom_LikeComment_Handler,
+			MethodName: "LikeMessage",
+			Handler:    _ChatRoom_LikeMessage_Handler,
 		},
 		{
 			MethodName: "Login",

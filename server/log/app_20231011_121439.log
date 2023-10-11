@@ -1,0 +1,122 @@
+2023/10/11 12:14:39 Starting gRPC server on localhost:55555...
+2023/10/11 12:15:15 Login request from alice_johnson: 8qQjqX15Chif+XyNXobncDnJMmE=
+2023/10/11 12:15:15 Failed to login as alice_johnson: Wrong password!
+2023/10/11 12:15:27 Login request from alice_johnson: iAZWsGvOaKsZJDSHnMnKsrqZVtI=
+2023/10/11 12:15:27 alice_johnson was just logged in
+2023/10/11 12:15:27 User alice_johnson request to join the chat room!
+2023/10/11 12:15:27 User alice_johnson is allowed to join the chat room!
+2023/10/11 12:15:28 alice_johnson requested connected users list
+2023/10/11 12:15:29 alice_johnson requested connected users list
+2023/10/11 12:15:29 alice_johnson requested connected users list
+2023/10/11 12:15:30 alice_johnson requested connected users list
+2023/10/11 12:15:31 alice_johnson requested connected users list
+2023/10/11 12:15:32 alice_johnson requested connected users list
+2023/10/11 12:15:32 alice_johnson requested connected users list
+2023/10/11 12:15:33 alice_johnson requested connected users list
+2023/10/11 12:15:34 alice_johnson requested connected users list
+2023/10/11 12:15:35 alice_johnson requested connected users list
+2023/10/11 12:15:35 alice_johnson requested connected users list
+2023/10/11 12:15:36 Login request from bob_greenwood: eueUNEyRmYNkJYnLr3EPUL8m0Vg=
+2023/10/11 12:15:36 bob_greenwood was just logged in
+2023/10/11 12:15:36 User bob_greenwood request to join the chat room!
+2023/10/11 12:15:36 User bob_greenwood is allowed to join the chat room!
+2023/10/11 12:15:36 alice_johnson requested connected users list
+2023/10/11 12:15:37 alice_johnson requested connected users list
+2023/10/11 12:15:37 bob_greenwood requested connected users list
+2023/10/11 12:15:38 bob_greenwood requested connected users list
+2023/10/11 12:15:38 alice_johnson requested connected users list
+2023/10/11 12:15:38 alice_johnson requested connected users list
+2023/10/11 12:15:39 bob_greenwood requested connected users list
+2023/10/11 12:15:39 bob_greenwood requested connected users list
+2023/10/11 12:15:39 alice_johnson requested connected users list
+2023/10/11 12:15:40 alice_johnson requested connected users list
+2023/10/11 12:15:40 bob_greenwood requested connected users list
+2023/10/11 12:15:41 bob_greenwood requested connected users list
+2023/10/11 12:15:41 alice_johnson requested connected users list
+2023/10/11 12:15:41 Room chat request from alice_johnson: hi bob
+2023/10/11 12:15:41 alice_johnson requested connected users list
+2023/10/11 12:15:42 bob_greenwood requested connected users list
+2023/10/11 12:15:42 bob_greenwood requested connected users list
+2023/10/11 12:15:42 alice_johnson requested connected users list
+2023/10/11 12:15:43 alice_johnson requested connected users list
+2023/10/11 12:15:43 bob_greenwood requested connected users list
+2023/10/11 12:15:44 bob_greenwood requested connected users list
+2023/10/11 12:15:44 alice_johnson requested connected users list
+2023/10/11 12:15:44 alice_johnson requested connected users list
+2023/10/11 12:15:45 bob_greenwood requested connected users list
+2023/10/11 12:15:45 bob_greenwood requested connected users list
+2023/10/11 12:15:45 Room chat request from bob_greenwood: hi alice
+2023/10/11 12:15:45 alice_johnson requested connected users list
+2023/10/11 12:15:46 alice_johnson requested connected users list
+2023/10/11 12:15:46 bob_greenwood requested connected users list
+2023/10/11 12:15:47 bob_greenwood requested connected users list
+2023/10/11 12:15:47 alice_johnson requested connected users list
+2023/10/11 12:15:47 alice_johnson requested connected users list
+2023/10/11 12:15:48 bob_greenwood requested connected users list
+2023/10/11 12:15:48 bob_greenwood requested connected users list
+2023/10/11 12:15:48 alice_johnson requested connected users list
+2023/10/11 12:15:49 alice_johnson requested connected users list
+2023/10/11 12:15:49 bob_greenwood requested connected users list
+2023/10/11 12:15:50 bob_greenwood requested connected users list
+2023/10/11 12:15:50 alice_johnson requested connected users list
+2023/10/11 12:15:50 Room chat request from bob_greenwood: another message
+2023/10/11 12:15:50 alice_johnson requested connected users list
+2023/10/11 12:15:51 bob_greenwood requested connected users list
+2023/10/11 12:15:51 bob_greenwood requested connected users list
+2023/10/11 12:15:51 alice_johnson requested connected users list
+2023/10/11 12:15:51 User bob_greenwood just liked Message of alice_johnson
+2023/10/11 12:15:52 alice_johnson requested connected users list
+2023/10/11 12:15:52 bob_greenwood requested connected users list
+2023/10/11 12:15:53 bob_greenwood requested connected users list
+2023/10/11 12:15:53 alice_johnson requested connected users list
+2023/10/11 12:15:53 alice_johnson requested connected users list
+2023/10/11 12:15:54 bob_greenwood requested connected users list
+2023/10/11 12:15:54 bob_greenwood requested connected users list
+2023/10/11 12:15:54 alice_johnson requested connected users list
+2023/10/11 12:15:55 alice_johnson requested connected users list
+2023/10/11 12:15:55 bob_greenwood requested connected users list
+2023/10/11 12:15:55 User bob_greenwood just liked Message of alice_johnson
+2023/10/11 12:15:56 bob_greenwood requested connected users list
+2023/10/11 12:15:56 alice_johnson requested connected users list
+2023/10/11 12:15:56 alice_johnson requested connected users list
+2023/10/11 12:15:57 bob_greenwood requested connected users list
+2023/10/11 12:15:57 bob_greenwood requested connected users list
+2023/10/11 12:15:57 alice_johnson requested connected users list
+2023/10/11 12:15:57 User bob_greenwood just liked Message of alice_johnson
+2023/10/11 12:15:58 alice_johnson requested connected users list
+2023/10/11 12:15:58 User bob_greenwood just liked Message of alice_johnson
+2023/10/11 12:15:58 bob_greenwood requested connected users list
+2023/10/11 12:15:59 bob_greenwood requested connected users list
+2023/10/11 12:15:59 alice_johnson requested connected users list
+2023/10/11 12:15:59 alice_johnson requested connected users list
+2023/10/11 12:16:00 bob_greenwood requested connected users list
+2023/10/11 12:16:00 bob_greenwood requested connected users list
+2023/10/11 12:16:00 alice_johnson requested connected users list
+2023/10/11 12:16:01 alice_johnson requested connected users list
+2023/10/11 12:16:01 bob_greenwood requested connected users list
+2023/10/11 12:16:02 bob_greenwood requested connected users list
+2023/10/11 12:16:02 alice_johnson requested connected users list
+2023/10/11 12:16:02 alice_johnson requested connected users list
+2023/10/11 12:16:03 bob_greenwood requested connected users list
+2023/10/11 12:16:03 bob_greenwood requested connected users list
+2023/10/11 12:16:03 alice_johnson requested connected users list
+2023/10/11 12:16:04 alice_johnson requested connected users list
+2023/10/11 12:16:04 bob_greenwood requested connected users list
+2023/10/11 12:16:05 bob_greenwood requested connected users list
+2023/10/11 12:16:05 alice_johnson requested connected users list
+2023/10/11 12:16:05 alice_johnson requested connected users list
+2023/10/11 12:16:05 Room chat request from alice_johnson: can I send again
+2023/10/11 12:16:06 bob_greenwood requested connected users list
+2023/10/11 12:16:06 bob_greenwood requested connected users list
+2023/10/11 12:16:06 alice_johnson requested connected users list
+2023/10/11 12:16:07 alice_johnson requested connected users list
+2023/10/11 12:16:07 bob_greenwood requested connected users list
+2023/10/11 12:16:08 bob_greenwood requested connected users list
+2023/10/11 12:16:08 alice_johnson requested connected users list
+2023/10/11 12:16:08 alice_johnson requested connected users list
+2023/10/11 12:16:09 bob_greenwood requested connected users list
+2023/10/11 12:16:09 bob_greenwood requested connected users list
+2023/10/11 12:16:09 alice_johnson requested connected users list
+2023/10/11 12:16:09 Client disconnected: alice_johnson!
+2023/10/11 12:16:10 bob_greenwood requested connected users list
+2023/10/11 12:16:10 Client disconnected: bob_greenwood!

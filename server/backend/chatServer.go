@@ -21,11 +21,16 @@ import (
 
 var hasher = sha1.New()
 
+type MessageLikes struct {
+	whoLike map[string]bool
+	nLike   int
+}
+
 type ChatServer struct {
 	registeredAccount     gs.UserList
 	loggedInAccount       map[string]bool
 	clientStream          map[string]gs.ChatRoom_ChatServer
-	messageLikes          map[string]int
+	messageLikes          map[string]MessageLikes
 	mu                    sync.Mutex
 	pathToUserCredentials string
 	gs.UnimplementedChatRoomServer
@@ -167,7 +172,7 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 		*/
 		log.Printf("Room chat request from %s: %s\n", username, msg.GetMessage())
 
-		if cs.messageLikes[username] < 2 {
+		if cs.messageLikes[username].nLike < 2 {
 			log.Printf("User %s has not enough likes to send new message to the room!\n", username)
 
 			err := stream.Send(&gs.ChatMessage{
@@ -202,33 +207,54 @@ func (cs *ChatServer) broadcast(msg *gs.ChatMessage) {
 			}
 		}
 	}
-	cs.messageLikes[msg.GetSender()] = 0
+	messageLike, _ := cs.messageLikes[msg.GetSender()]
+	messageLike.nLike = 0
+	messageLike.whoLike = make(map[string]bool)
 }
 
 // handle like command from client
-func (cs *ChatServer) LikeComment(ctx context.Context, command *gs.UserRequest) (*gs.SentMessageStatus, error) {
+func (cs *ChatServer) LikeMessage(ctx context.Context, command *gs.UserRequest) (*gs.SentMessageStatus, error) {
 	sender := command.GetSender()
 	recipent := command.GetTarget()
 
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
-
-	cs.messageLikes[recipent]++
-
 	timestamp := time.Now().Unix()
 	id := fmt.Sprintf("%d-%s", timestamp, sender)
+	var status codes.Code
+	var err error
 
-	log.Printf("User %s just liked comment of %s\n", sender, recipent)
-	cs.broadcast(&gs.ChatMessage{
-		Message: fmt.Sprintf("%s just liked comment of %s", sender, recipent),
-		Sender:  "Server",
-	})
+	messageLike, _ := cs.messageLikes[recipent]
+	if messageLike.whoLike[sender] == true {
+		log.Printf("User %s already liked message of %s and cannot like again\n", sender, recipent)
+
+		cs.broadcast(&gs.ChatMessage{
+			Message: fmt.Sprintf("%s requested to like Message of %s but rejected!!", sender, recipent),
+			Sender:  "Server",
+		})
+
+		status = codes.AlreadyExists
+		err = errors.New("Duplicated like request")
+	} else {
+		messageLike.nLike++
+		messageLike.whoLike[sender] = true
+		cs.messageLikes[recipent] = messageLike
+
+		log.Printf("User %s just liked Message of %s\n", sender, recipent)
+		cs.broadcast(&gs.ChatMessage{
+			Message: fmt.Sprintf("%s just liked Message of %s", sender, recipent),
+			Sender:  "Server",
+		})
+
+		status = codes.OK
+		err = nil
+	}
 
 	return &gs.SentMessageStatus{
 		Id:        id,
 		Timestamp: timestamp,
-		Status:    int32(codes.OK),
-	}, nil
+		Status:    int32(status),
+	}, err
 }
 
 // handle private message from client to client
@@ -301,7 +327,10 @@ func (cs *ChatServer) Login(ctx context.Context, in *gs.UserLoginCredentials) (*
 		} else {
 			// handle successful login
 			cs.loggedInAccount[in.Username] = true
-			cs.messageLikes[in.Username] = 2
+			cs.messageLikes[in.Username] = MessageLikes{
+				nLike:   2,
+				whoLike: make(map[string]bool),
+			}
 
 			msg := "Login successfully!!!!"
 			result.Message = &msg
@@ -420,7 +449,7 @@ func NewChatServer(pathToUserCredentials string) *ChatServer {
 	cs := ChatServer{}
 	cs.clientStream = make(map[string]gs.ChatRoom_ChatServer)
 	cs.loggedInAccount = make(map[string]bool)
-	cs.messageLikes = make(map[string]int)
+	cs.messageLikes = make(map[string]MessageLikes)
 	cs.mu = sync.Mutex{}
 	cs.pathToUserCredentials = pathToUserCredentials
 	cs.loadUserInformation(cs.pathToUserCredentials)

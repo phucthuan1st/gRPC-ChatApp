@@ -438,12 +438,21 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 	}
 
 	likeHandler := func() {
-		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
+		if sender == "You" || sender == "Server" {
+			return
+		}
+
+		_, err := ca.stub.LikeMessage(context.Background(), &gs.UserRequest{
 			Sender: *ca.username,
 			Target: &sender,
 		})
 
-		ca.alert("You like the comment of " + sender + "!")
+		if err != nil {
+			ca.alert(fmt.Sprintf("%s", err.Error()))
+		} else {
+			ca.alert("You like the comment of " + sender + "!")
+		}
+
 	}
 
 	if sender == "You" {
@@ -470,7 +479,7 @@ func (ca *ClientApp) updatePrivateMessageList(sender, target, message string) {
 	}
 
 	ca.privateMessageList[target].AddItem(sender, message, r, func() {
-		ca.stub.LikeComment(context.Background(), &gs.UserRequest{
+		ca.stub.LikeMessage(context.Background(), &gs.UserRequest{
 			Sender: *ca.username,
 			Target: &sender,
 		})
