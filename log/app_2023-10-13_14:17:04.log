@@ -1,0 +1,18 @@
+2023/10/13 14:17:04 Starting gRPC server on localhost:55555...
+2023/10/13 14:17:24 Login request from bob_greenwood: KqYKj/f81HPTIeAUav2eJt85UUc=
+2023/10/13 14:17:24 User bob_greenwood has logged in successfully!
+2023/10/13 14:17:24 User bob_greenwood request to join the chat room!
+2023/10/13 14:17:24 User bob_greenwood is allowed to join the chat room!
+2023/10/13 14:17:35 Login request from tester_no_bug: cqPA6H6A4B12uEaDTXoUw2GPhTg=
+2023/10/13 14:17:35 User tester_no_bug has logged in successfully!
+2023/10/13 14:17:35 User tester_no_bug request to join the chat room!
+2023/10/13 14:17:35 User tester_no_bug is allowed to join the chat room!
+2023/10/13 14:17:50 tester_no_bug sent a message to bob_greenwood: hello
+2023/10/13 14:17:50 Message sent from tester_no_bug to bob_greenwood successfully
+2023/10/13 14:17:52 bob_greenwood requested information about tester_no_bug
+2023/10/13 14:17:54 tester_no_bug requested information about bob_greenwood
+2023/10/13 14:17:56 tester_no_bug requested information about bob_greenwood
+2023/10/13 14:17:57 tester_no_bug requested information about bob_greenwood
+2023/10/13 14:17:58 tester_no_bug requested information about bob_greenwood
+2023/10/13 14:18:24 Client disconnected: bob_greenwood!
+2023/10/13 14:18:27 Client disconnected: tester_no_bug!

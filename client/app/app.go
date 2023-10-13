@@ -347,10 +347,8 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 
 	// Input flex contains the input field and the send button
 	ca.inputArea = tview.NewTextArea()
-	ca.inputArea.SetBorder(true)
 
 	sendBtn := tview.NewButton("Send")
-	sendBtn.SetBorder(true)
 	sendBtn.SetSelectedFunc(func() {
 		message := ca.inputArea.GetText()
 
@@ -374,8 +372,8 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
 	// Add the message flex and the input flex to the left flex
-	leftFlex.AddItem(ca.publicMessageList, 0, 9, true)
-	leftFlex.AddItem(inputFlex, 0, 1, false)
+	leftFlex.AddItem(ca.publicMessageList, 0, 7, true)
+	leftFlex.AddItem(inputFlex, 0, 2, false)
 	leftFlex.SetBorder(true)
 
 	return leftFlex
@@ -561,10 +559,8 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 
 	// COMPONENT: Input flex contains the input field and the send button
 	ca.inputArea = tview.NewTextArea()
-	ca.inputArea.SetBorder(true)
 
 	sendBtn := tview.NewButton("Send")
-	sendBtn.SetBorder(true)
 	sendBtn.SetSelectedFunc(func() {
 		message := ca.inputArea.GetText()
 
@@ -612,8 +608,8 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 
 	// FINAL: Add the message flex and the input flex to the left flex
 	leftFlex.AddItem(tabbedFlex, 0, 1, false)
-	leftFlex.AddItem(ca.privateMessageList[target], 0, 9, true)
-	leftFlex.AddItem(inputFlex, 0, 1, false)
+	leftFlex.AddItem(ca.privateMessageList[target], 0, 6, true)
+	leftFlex.AddItem(inputFlex, 0, 2, false)
 	leftFlex.SetBorder(true)
 
 	profTabBtn.SetSelectedFunc(func() {
@@ -623,7 +619,7 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 
 		userProfView := ca.createUserProfieView(target)
 		leftFlex.AddItem(tabbedFlex, 0, 1, false)
-		leftFlex.AddItem(userProfView, 0, 10, true)
+		leftFlex.AddItem(userProfView, 0, 8, true)
 	})
 
 	msgTabBtn.SetSelectedFunc(func() {
@@ -632,8 +628,8 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 		leftFlex.Clear()
 
 		leftFlex.AddItem(tabbedFlex, 0, 1, false)
-		leftFlex.AddItem(ca.privateMessageList[target], 0, 9, true)
-		leftFlex.AddItem(inputFlex, 0, 1, false)
+		leftFlex.AddItem(ca.privateMessageList[target], 0, 5, true)
+		leftFlex.AddItem(inputFlex, 0, 2, false)
 	})
 
 	return leftFlex

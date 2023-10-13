@@ -1,0 +1,14 @@
+2023/10/13 13:54:44 Starting gRPC server on localhost:55555...
+2023/10/13 13:55:25 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
+2023/10/13 13:55:25 User alice_johnson has logged in successfully!
+2023/10/13 13:55:25 User alice_johnson request to join the chat room!
+2023/10/13 13:55:25 User alice_johnson is allowed to join the chat room!
+2023/10/13 13:56:46 Register request from tester_no_bug
+2023/10/13 13:56:46 tester_no_bug was just registered successfully
+2023/10/13 13:57:02 Login request from tester_no_bug: +9XqmhbV/gXhP66WdYiTVGj1Fk0=
+2023/10/13 13:57:02 User tester_no_bug has logged in successfully!
+2023/10/13 13:57:02 User tester_no_bug request to join the chat room!
+2023/10/13 13:57:02 User tester_no_bug is allowed to join the chat room!
+2023/10/13 13:57:19 Room chat request from tester_no_bug: helloalice hello
+2023/10/13 13:57:29 Client disconnected: tester_no_bug!
+2023/10/13 13:57:31 Client disconnected: alice_johnson!
