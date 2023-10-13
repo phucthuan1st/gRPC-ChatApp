@@ -1,6 +1,0 @@
-2023/10/13 13:58:38 Starting gRPC server on localhost:55555...
-2023/10/13 13:58:52 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
-2023/10/13 13:58:52 User alice_johnson has logged in successfully!
-2023/10/13 13:58:52 User alice_johnson request to join the chat room!
-2023/10/13 13:58:52 User alice_johnson is allowed to join the chat room!
-2023/10/13 13:59:07 Client disconnected: alice_johnson!
