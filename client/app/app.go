@@ -28,19 +28,16 @@ type ClientApp struct {
 	selectedIndex       int
 	stillRunning        bool
 	refreshFuncs        []func()
+	RefreshInterval     time.Duration
+	Port                int
+	Ipaddr              string
 }
 
-const (
-	refreshInterval = 250 * time.Millisecond
-	port            = 55555
-	ipaddr          = "localhost"
-)
-
 // Start and run the client application
-func (ca *ClientApp) Start() {
+func (ca *ClientApp) Start() error {
 	var err error
 
-	serverAddr := fmt.Sprintf("%s:%d", ipaddr, port)
+	serverAddr := fmt.Sprintf("%s:%d", ca.Ipaddr, ca.Port)
 	ca.conn, err = grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	ca.app = tview.NewApplication()
@@ -61,6 +58,8 @@ func (ca *ClientApp) Start() {
 	}
 	ca.navigateToLogin()
 	ca.app.SetRoot(ca.navigator, true).EnableMouse(true).Run()
+
+	return err
 }
 
 // Start listening for messages from server
@@ -323,8 +322,8 @@ func (ca *ClientApp) navigateToLogin() {
 
 // Register page navigation
 func (ca *ClientApp) navigateToRegister() {
-	if ca.navigator.HasPage("Login") {
-		ca.navigator.SwitchToPage("Login")
+	if ca.navigator.HasPage("Register") {
+		ca.navigator.SwitchToPage("Register")
 	} else {
 		flex := ca.createCenterFlexForm(ca.createUserRegistrationForm(), true)
 		ca.navigator.AddAndSwitchToPage("Register", flex, true)
@@ -368,6 +367,9 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	})
 
 	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	inputFlex.SetBorder(true)
+	inputFlex.SetTitleAlign(tview.AlignLeft)
+	inputFlex.SetTitle(*ca.username)
 	inputFlex.AddItem(ca.inputArea, 0, 5, true)
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
@@ -580,6 +582,9 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 	})
 
 	inputFlex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	inputFlex.SetBorder(true)
+	inputFlex.SetTitleAlign(tview.AlignLeft)
+	inputFlex.SetTitle(*ca.username)
 	inputFlex.AddItem(ca.inputArea, 0, 5, true)
 	inputFlex.AddItem(sendBtn, 0, 1, false)
 
@@ -660,7 +665,7 @@ func (ca *ClientApp) navigateToPrivateChatRoom(target string) {
 
 // refresh app (including refresh connected clients list)
 func (ca *ClientApp) refresh() {
-	tick := time.NewTicker(refreshInterval)
+	tick := time.NewTicker(ca.RefreshInterval)
 	defer tick.Stop() // Ensure the ticker is stopped when the function exits.
 
 	for {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,10 +14,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	port           = 55555
-	connectionType = "tcp"
-	serverAddress  = "localhost"
+var (
+	port           int    = 55555
+	connectionType string = "tcp"
+	serverAddress  string = "localhost"
+	logDir         string = "log"
+	credDB         string = "db/UserCredentials.json"
 )
 
 func setupLogging(logFile *os.File) {
@@ -32,9 +35,18 @@ func setupLogging(logFile *os.File) {
 }
 
 func main() {
+
+	flag.StringVar(&serverAddress, "server", serverAddress, "gRPC server address")
+	flag.IntVar(&port, "port", port, "server port")
+	flag.StringVar(&connectionType, "connectionType", connectionType, "connection type")
+	flag.StringVar(&logDir, "logDir", logDir, "log directory")
+	flag.StringVar(&credDB, "credDB", credDB, "location of credentials database")
+
+	flag.Parse()
+
 	// Generate a log file name based on the current date and time.
 	currentTime := time.Now()
-	logFileName := fmt.Sprintf("server/log/app_%s.log", currentTime.Format("20060102_150405"))
+	logFileName := fmt.Sprintf("%s/app_%s.log", logDir, currentTime.Format("2006-01-02_15:04:05"))
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Error opening log file: %v", err)
@@ -53,7 +65,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	backendServer := be.NewChatServer(os.Args[1])
+	backendServer := be.NewChatServer(credDB)
 	grpcService.RegisterChatRoomServer(grpcServer, backendServer)
 
 	defer grpcServer.GracefulStop()
