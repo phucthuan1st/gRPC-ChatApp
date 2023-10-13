@@ -1,4 +1,4 @@
-# gRPC Chat Room
+# gRPC Golang Chat Application
 
 - Author: Nguyễn Phúc Thuần
 - Org: FIT@HCMUS
