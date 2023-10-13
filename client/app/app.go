@@ -57,7 +57,7 @@ func (ca *ClientApp) Start() error {
 	ca.refreshFuncs = append(ca.refreshFuncs, func() {
 		ca.app.Draw()
 	})
-	
+
 	ca.navigateToLogin()
 	ca.app.SetRoot(ca.navigator, true).EnableMouse(true).Run()
 
@@ -630,7 +630,7 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 		leftFlex.Clear()
 
 		leftFlex.AddItem(tabbedFlex, 0, 1, false)
-		leftFlex.AddItem(ca.privateMessageList[target], 0, 5, true)
+		leftFlex.AddItem(ca.privateMessageList[target], 0, 6, true)
 		leftFlex.AddItem(inputFlex, 0, 2, false)
 	})
 
