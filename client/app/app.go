@@ -31,6 +31,7 @@ type ClientApp struct {
 	RefreshInterval     time.Duration
 	Port                int
 	Ipaddr              string
+	nRecieveMessage     int
 }
 
 // Start and run the client application
@@ -54,9 +55,13 @@ func (ca *ClientApp) Start() error {
 	ca.privateMessageList = make(map[string]*tview.List)
 	ca.navigator = tview.NewPages()
 
+	ca.inputArea = tview.NewTextArea()
+
 	ca.refreshFuncs = append(ca.refreshFuncs, func() {
 		ca.app.Draw()
 	})
+
+	ca.nRecieveMessage = 0
 
 	ca.navigateToLogin()
 	ca.app.SetRoot(ca.navigator, true).EnableMouse(true).Run()
@@ -87,6 +92,7 @@ func (ca *ClientApp) startListening() {
 				} else {
 					if msg.GetPrivate() > 0 {
 						ca.updatePrivateMessageList(msg.GetSender(), msg.GetSender(), msg.GetMessage())
+						ca.nRecieveMessage++
 					} else {
 						ca.updateMessageList(msg.GetSender(), msg.GetMessage())
 					}
@@ -348,7 +354,7 @@ func (ca *ClientApp) createChatRoomLeftFlex() *tview.Flex {
 	ca.publicMessageList.SetBorder(true).SetTitle("Messages").SetTitleAlign(tview.AlignRight)
 
 	// Input flex contains the input field and the send button
-	ca.inputArea = tview.NewTextArea()
+	ca.inputArea.SetText("", true)
 
 	sendBtn := tview.NewButton("Send")
 	sendBtn.SetSelectedFunc(func() {
@@ -464,6 +470,7 @@ func (ca *ClientApp) updateMessageList(sender, message string) {
 
 	}
 
+	ca.publicMessageList.SetCurrentItem(ca.nRecieveMessage)
 	ca.publicMessageList.AddItem(sender, message, r, likeHandler)
 	ca.app.SetFocus(ca.publicMessageList)
 }
@@ -560,7 +567,7 @@ func (ca *ClientApp) createPrivateChatRoomLeftFlex(target string) *tview.Flex {
 	ca.privateMessageList[target].SetBorder(true).SetTitle(target).SetTitleAlign(tview.AlignRight)
 
 	// COMPONENT: Input flex contains the input field and the send button
-	ca.inputArea = tview.NewTextArea()
+	ca.inputArea.SetText("", true)
 
 	sendBtn := tview.NewButton("Send")
 	sendBtn.SetSelectedFunc(func() {

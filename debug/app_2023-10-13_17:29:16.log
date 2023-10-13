@@ -1,0 +1,83 @@
+2023/10/13 17:29:16 Starting gRPC server on localhost:55555...
+2023/10/13 17:29:54 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
+2023/10/13 17:29:54 User alice_johnson has logged in successfully!
+2023/10/13 17:29:54 User alice_johnson request to join the chat room!
+2023/10/13 17:29:54 User alice_johnson is allowed to join the chat room!
+2023/10/13 17:30:07 Login request from bob_greenwood: /VMVjx9V2g2tzyDvc0KEb7WwK+Y=
+2023/10/13 17:30:07 User bob_greenwood has logged in successfully!
+2023/10/13 17:30:07 User bob_greenwood request to join the chat room!
+2023/10/13 17:30:07 User bob_greenwood is allowed to join the chat room!
+2023/10/13 17:30:20 Login request from carol_martin: 9Z5B9Zro1shSVJFWumZYHK12F2o=
+2023/10/13 17:30:20 User carol_martin has logged in successfully!
+2023/10/13 17:30:20 User carol_martin request to join the chat room!
+2023/10/13 17:30:20 User carol_martin is allowed to join the chat room!
+2023/10/13 17:31:03 Register request from keith_mccall
+2023/10/13 17:31:03 keith_mccall was just registered successfully
+2023/10/13 17:31:13 Login request from keith_mccall: 3yo8c+YfmOuGISf5scwHaPjWWmM=
+2023/10/13 17:31:13 User keith_mccall has logged in successfully!
+2023/10/13 17:31:13 User keith_mccall request to join the chat room!
+2023/10/13 17:31:13 User keith_mccall is allowed to join the chat room!
+2023/10/13 17:31:37 Login request from frank_white: 8dD+5TIg9vNp8qwLy8TrMdWB2YM=
+2023/10/13 17:31:37 Failed to login as frank_white: Wrong password!
+2023/10/13 17:31:50 Login request from frank_white: HdHyK4aV6CfFhVDdKD7yIj2WGjk=
+2023/10/13 17:31:50 User frank_white has logged in successfully!
+2023/10/13 17:31:50 User frank_white request to join the chat room!
+2023/10/13 17:31:50 User frank_white is allowed to join the chat room!
+2023/10/13 17:32:04 Room chat request from bob_greenwood: hello, From Bob with luv
+2023/10/13 17:32:25 Room chat request from bob_greenwood: bob sent again but will fail!!!
+2023/10/13 17:32:25 User bob_greenwood has not enough likes to send new message to the room!
+2023/10/13 17:32:43 Room chat request from keith_mccall: hello all
+2023/10/13 17:32:50 Room chat request from keith_mccall: can I send again?
+2023/10/13 17:32:50 User keith_mccall has not enough likes to send new message to the room!
+2023/10/13 17:32:53 User alice_johnson just liked Message of keith_mccall
+2023/10/13 17:32:55 User alice_johnson already liked message of keith_mccall and cannot like again
+2023/10/13 17:32:59 User bob_greenwood just liked Message of keith_mccall
+2023/10/13 17:33:02 User frank_white just liked Message of bob_greenwood
+2023/10/13 17:33:04 User frank_white just liked Message of keith_mccall
+2023/10/13 17:33:13 Room chat request from keith_mccall: now I can chat again?
+2023/10/13 17:33:22 keith_mccall sent a message to bob_greenwood: hello bob 
+2023/10/13 17:33:22 Message sent from keith_mccall to bob_greenwood successfully
+2023/10/13 17:33:34 bob_greenwood sent a message to keith_mccall: hello keith
+2023/10/13 17:33:34 Message sent from bob_greenwood to keith_mccall successfully
+2023/10/13 17:33:38 keith_mccall sent a message to bob_greenwood: see ya
+2023/10/13 17:33:38 Message sent from keith_mccall to bob_greenwood successfully
+2023/10/13 17:33:48 keith_mccall sent a message to frank_white: hello frank
+2023/10/13 17:33:48 Message sent from keith_mccall to frank_white successfully
+2023/10/13 17:34:16 alice_johnson sent a message to carol_martin: hello alice
+2023/10/13 17:34:16 Message sent from alice_johnson to carol_martin successfully
+2023/10/13 17:34:37 carol_martin sent a message to keith_mccall: hello keith
+2023/10/13 17:34:37 Message sent from carol_martin to keith_mccall successfully
+2023/10/13 17:34:46 keith_mccall requested information about alice_johnson
+2023/10/13 17:34:50 bob_greenwood requested information about keith_mccall
+2023/10/13 17:34:53 User frank_white just liked Message of keith_mccall
+2023/10/13 17:34:56 frank_white requested information about keith_mccall
+2023/10/13 17:35:00 carol_martin requested information about keith_mccall
+2023/10/13 17:35:05 frank_white requested information about carol_martin
+2023/10/13 17:35:10 frank_white sent a message to carol_martin: hello carol
+2023/10/13 17:35:10 Message sent from frank_white to carol_martin successfully
+2023/10/13 17:35:48 keith_mccall sent a message to carol_martin: hello carol
+2023/10/13 17:35:48 Message sent from keith_mccall to carol_martin successfully
+2023/10/13 17:36:02 keith_mccall sent a message to carol_martin: I can sent again
+2023/10/13 17:36:02 Message sent from keith_mccall to carol_martin successfully
+2023/10/13 17:36:13 carol_martin sent a message to frank_white: hello frank
+2023/10/13 17:36:13 Message sent from carol_martin to frank_white successfully
+2023/10/13 17:36:27 frank_white requested information about keith_mccall
+2023/10/13 17:36:42 frank_white requested information about alice_johnson
+2023/10/13 17:36:46 frank_white requested information about alice_johnson
+2023/10/13 17:36:50 Client disconnected: frank_white!
+2023/10/13 17:36:59 carol_martin sent a message to frank_white: hello?
+2023/10/13 17:37:10 carol_martin requested information about bob_greenwood
+2023/10/13 17:37:17 Client disconnected: alice_johnson!
+2023/10/13 17:37:18 Client disconnected: carol_martin!
+2023/10/13 17:38:26 Login request from alice_johnson: FieiKd3hU9TF1WdRCUp280UXvZI=
+2023/10/13 17:38:26 User alice_johnson has logged in successfully!
+2023/10/13 17:38:26 User alice_johnson request to join the chat room!
+2023/10/13 17:38:26 User alice_johnson is allowed to join the chat room!
+2023/10/13 17:38:40 Login request from keith_mccall: p2hOehcceBcWMg0ILc4A90kIl28=
+2023/10/13 17:38:40 Failed to login as keith_mccall: Already login from another place!
+2023/10/13 17:38:52 Login request from keith_mccall: Z8kw2WGc9RT4hU1o4iOVHesRcUc=
+2023/10/13 17:38:52 Failed to login as keith_mccall: Already login from another place!
+2023/10/13 17:39:04 Login request from keith_mccall: CJW11ga1b/8v4Cj17k4nysb39iI=
+2023/10/13 17:39:04 Failed to login as keith_mccall: Already login from another place!
+2023/10/13 17:39:43 Login request from keith_mccall: +rMSo9rKiPLMEn/JbobYZfu/C6Y=
+2023/10/13 17:39:43 Failed to login as keith_mccall: Already login from another place!

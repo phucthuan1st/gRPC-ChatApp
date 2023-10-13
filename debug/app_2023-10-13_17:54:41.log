@@ -1,0 +1,88 @@
+2023/10/13 17:54:41 Starting gRPC server on localhost:55555...
+2023/10/13 17:54:59 Login request from alice_johnson: 44rSFJQ9qtHWTBAvrsKd5K/p2j0=
+2023/10/13 17:54:59 User alice_johnson has logged in successfully!
+2023/10/13 17:54:59 User alice_johnson request to join the chat room!
+2023/10/13 17:54:59 User alice_johnson is allowed to join the chat room!
+2023/10/13 17:55:12 Login request from bob_greenwood: /VMVjx9V2g2tzyDvc0KEb7WwK+Y=
+2023/10/13 17:55:12 User bob_greenwood has logged in successfully!
+2023/10/13 17:55:12 User bob_greenwood request to join the chat room!
+2023/10/13 17:55:12 User bob_greenwood is allowed to join the chat room!
+2023/10/13 17:55:39 Register request from new_gamer
+2023/10/13 17:55:39 new_gamer was just registered successfully
+2023/10/13 17:55:46 Login request from new_gamer: Jvzi+uQ/dZsARcHv2eJ5XyiDXgk=
+2023/10/13 17:55:46 User new_gamer has logged in successfully!
+2023/10/13 17:55:46 User new_gamer request to join the chat room!
+2023/10/13 17:55:46 User new_gamer is allowed to join the chat room!
+2023/10/13 17:56:14 Login request from davis_smith: 8hpy+ZQoqYAdKRxepDinlUSy28Y=
+2023/10/13 17:56:23 Login request from david_smith: tq6+aCT7SYKLYtnDLN03dP7KMgo=
+2023/10/13 17:56:23 User david_smith has logged in successfully!
+2023/10/13 17:56:23 User david_smith request to join the chat room!
+2023/10/13 17:56:23 User david_smith is allowed to join the chat room!
+2023/10/13 17:56:38 Login request from frank_white: Qhp7bfM+ZDLkd3V0qZkJuaPvIyY=
+2023/10/13 17:56:38 User frank_white has logged in successfully!
+2023/10/13 17:56:38 User frank_white request to join the chat room!
+2023/10/13 17:56:38 User frank_white is allowed to join the chat room!
+2023/10/13 17:56:59 Room chat request from frank_white: Hello every one, I'm frank
+2023/10/13 17:57:13 Room chat request from new_gamer: Hello, I'm the newbie
+2023/10/13 17:57:25 Room chat request from new_gamer: Can I send again? 
+2023/10/13 17:57:25 User new_gamer has not enough likes to send new message to the room!
+2023/10/13 17:57:28 User bob_greenwood just liked Message of new_gamer
+2023/10/13 17:57:39 User alice_johnson just liked Message of new_gamer
+2023/10/13 17:57:44 Room chat request from new_gamer: Thanks
+2023/10/13 17:57:51 new_gamer sent a message to david_smith: hello davis
+2023/10/13 17:57:51 Message sent from new_gamer to david_smith successfully
+2023/10/13 17:57:54 User david_smith just liked Message of frank_white
+2023/10/13 17:58:07 david_smith sent a message to new_gamer: hello newbie
+2023/10/13 17:58:07 Message sent from david_smith to new_gamer successfully
+2023/10/13 17:58:17 david_smith sent a message to new_gamer: we can chat in here with no limit
+2023/10/13 17:58:17 Message sent from david_smith to new_gamer successfully
+2023/10/13 17:58:20 new_gamer sent a message to david_smith: I see
+2023/10/13 17:58:20 Message sent from new_gamer to david_smith successfully
+2023/10/13 17:58:28 new_gamer sent a message to bob_greenwood: hello bob
+2023/10/13 17:58:28 Message sent from new_gamer to bob_greenwood successfully
+2023/10/13 17:58:32 new_gamer sent a message to bob_greenwood: that good
+2023/10/13 17:58:32 Message sent from new_gamer to bob_greenwood successfully
+2023/10/13 17:58:46 bob_greenwood sent a message to new_gamer: hello newbie
+
+2023/10/13 17:58:46 Message sent from bob_greenwood to new_gamer successfully
+2023/10/13 17:58:53 alice_johnson sent a message to new_gamer: hello newbie
+2023/10/13 17:58:53 Message sent from alice_johnson to new_gamer successfully
+2023/10/13 17:59:05 new_gamer sent a message to alice_johnson: hello alice
+2023/10/13 17:59:05 Message sent from new_gamer to alice_johnson successfully
+2023/10/13 17:59:07 new_gamer requested information about alice_johnson
+2023/10/13 17:59:12 alice_johnson requested information about new_gamer
+2023/10/13 17:59:15 bob_greenwood requested information about new_gamer
+2023/10/13 17:59:19 bob_greenwood requested information about alice_johnson
+2023/10/13 17:59:29 bob_greenwood sent a message to david_smith: hello davis
+2023/10/13 17:59:29 Message sent from bob_greenwood to david_smith successfully
+2023/10/13 17:59:40 david_smith sent a message to bob_greenwood: hello bob
+2023/10/13 17:59:40 Message sent from david_smith to bob_greenwood successfully
+2023/10/13 17:59:41 david_smith requested information about bob_greenwood
+2023/10/13 17:59:43 david_smith requested information about bob_greenwood
+2023/10/13 17:59:49 User david_smith just liked Message of new_gamer
+2023/10/13 18:00:10 Room chat request from david_smith: hello guys
+2023/10/13 18:00:13 User new_gamer just liked Message of david_smith
+2023/10/13 18:00:18 User bob_greenwood just liked Message of david_smith
+2023/10/13 18:00:30 Room chat request from david_smith: david say again
+2023/10/13 18:00:36 Room chat request from new_gamer: haha
+2023/10/13 18:00:36 User new_gamer has not enough likes to send new message to the room!
+2023/10/13 18:00:40 User bob_greenwood just liked Message of new_gamer
+2023/10/13 18:00:47 Room chat request from new_gamer: haha
+2023/10/13 18:00:58 Client offline: david_smith!
+2023/10/13 18:01:01 Client offline: alice_johnson!
+2023/10/13 18:01:16 User bob_greenwood just liked Message of david_smith
+2023/10/13 18:01:19 Room chat request from bob_greenwood: hello alice
+2023/10/13 18:01:34 Room chat request from new_gamer: hello
+2023/10/13 18:01:34 User new_gamer has not enough likes to send new message to the room!
+2023/10/13 18:01:41 User bob_greenwood just liked Message of new_gamer
+2023/10/13 18:01:43 User frank_white just liked Message of new_gamer
+2023/10/13 18:01:45 User frank_white just liked Message of bob_greenwood
+2023/10/13 18:01:48 User frank_white already liked message of new_gamer and cannot like again
+2023/10/13 18:01:58 Room chat request from new_gamer: bob and davis here
+2023/10/13 18:02:22 Room chat request from bob_greenwood: hello davis and newbie
+2023/10/13 18:02:22 User bob_greenwood has not enough likes to send new message to the room!
+2023/10/13 18:02:28 User new_gamer just liked Message of bob_greenwood
+2023/10/13 18:02:41 Room chat request from bob_greenwood: hello davis and newbie
+2023/10/13 18:02:47 Client offline: new_gamer!
+2023/10/13 18:02:48 Client offline: frank_white!
+2023/10/13 18:02:51 Client offline: bob_greenwood!

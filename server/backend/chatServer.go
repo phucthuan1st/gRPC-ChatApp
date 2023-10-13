@@ -155,13 +155,14 @@ func (cs *ChatServer) Chat(stream gs.ChatRoom_ChatServer) error {
 			s, _ := status.FromError(err)
 			switch s.Code() {
 			case codes.Canceled:
-				log.Printf("Client disconnected: %s!\n", username)
+				log.Printf("Client offline: %s!\n", username)
 				cs.removeClientStream(username)
-				cs.loggedInAccount[username] = false
+				delete(cs.loggedInAccount, username)
 				return err
 			default:
 				log.Printf("Error reciving message: %v", err)
 				cs.removeClientStream(username)
+				delete(cs.loggedInAccount, username)
 				return err
 			}
 		}
@@ -233,7 +234,7 @@ func (cs *ChatServer) LikeMessage(ctx context.Context, command *gs.UserRequest) 
 		log.Printf("User %s already liked message of %s and cannot like again\n", sender, recipent)
 
 		cs.broadcast(&gs.ChatMessage{
-			Message: fmt.Sprintf("%s requested to like Message of %s but rejected!!", sender, recipent),
+			Message: fmt.Sprintf("%s try to like message of %s but rejected!!", sender, recipent),
 			Sender:  "Server",
 		})
 
