@@ -104,6 +104,8 @@ If there is no binary pre-built file in the bin folder, or you just wanna build 
 go build -o bin/server server/main.go && go build -o bin/client client/main.go
 ```
 
+## Protobuf
+If you wanna update the protobuf, you can do it by simply run [gen_protobuf script](https://github.com/phucthuan1st/gRPC-ChatRoom/blob/master/gen_protobuf.sh)
 <br>
 
 ## Contributing
