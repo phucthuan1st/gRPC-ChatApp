@@ -41,6 +41,14 @@ func (ca *ClientApp) Start() error {
 	ca.conn, err = grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	ca.app = tview.NewApplication()
+
+	if err != nil {
+		ca.alert("Cannot connect to server", "")
+		ca.Exit()
+	} else {
+		ca.stub = gs.NewChatRoomClient(ca.conn)
+	}
+
 	ca.connectedClientList = tview.NewList()
 	ca.publicMessageList = tview.NewList()
 	ca.privateMessageList = make(map[string]*tview.List)
@@ -49,13 +57,7 @@ func (ca *ClientApp) Start() error {
 	ca.refreshFuncs = append(ca.refreshFuncs, func() {
 		ca.app.Draw()
 	})
-
-	if err != nil {
-		ca.alert("Cannot connect to server", "")
-		ca.Exit()
-	} else {
-		ca.stub = gs.NewChatRoomClient(ca.conn)
-	}
+	
 	ca.navigateToLogin()
 	ca.app.SetRoot(ca.navigator, true).EnableMouse(true).Run()
 
