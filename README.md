@@ -37,6 +37,8 @@ But do not worry. I will include gRPC and tview in go module config (go.mod) and
 
 ## Usage
 
+### Install
+
 1. Clone the repository:
 
 ```
@@ -58,7 +60,15 @@ go get -u all
 4. Start the server:
 
 ```
-go run server/main.go {pathToUserCredentials_json}
+go run server/main.go
+```
+Flags:
+```
+-server                        : gRPC server (or callee) address, default: localhost
+-port                            : server (or callee) port, default: 55555
+-connectionType   : type of connection between stubs, default: tcp
+-credDB                     : path to json contains user credentials and infomation, default: db/UserCredentials.json
+-logDir                        : specify where should the server put the log file on
 ```
 
 5. Start a client (multiple clients can be run in different terminal windows):
@@ -66,8 +76,33 @@ go run server/main.go {pathToUserCredentials_json}
 ```
 go run client/main.go
 ```
+Flags:
+```
+-ipaddr                      : gRPC server (or callee) address, default: localhost
+-port                           : server (or callee) port, default: 55555
+-interval                    : application refresh/update interval, default 100*Millisecond
+```
 
 6. Follow the on-screen instructions to chat with other users using the tview GUI.
+
+### Run without install
+
+You can download the release version from [Releases here](https://github.com/phucthuan1st/gRPC-ChatRoom/releases/tag/beta) 
+
+Else if you're already clone the repo, you can just run the server by navigate to bin folder, then run the program (in terminal)
+```
+./server [FLAG]
+```
+
+and the client app:
+```
+./client [FLAG]
+```
+
+If there is no binary pre-built file in the bin folder, or you just wanna build binary/executable file in you system, quickly run following command in the project folder (gRPC-ChatRoom)
+```
+go build -o bin/server server/main.go && go build -o bin/client client/main.go
+```
 
 <br>
 
